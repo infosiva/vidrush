@@ -177,6 +177,7 @@ const SIVAPRAKASAM_PROJECTS = [
   'pdfideas',               // pdfideas.app
   'complybuddy',            // complyscan.app
   'invoicemint',            // invoicemint.app
+  'outreach-crm',           // outreachcrm — new 2026-05-29
 ]
 
 // ── Environments ──────────────────────────────────────────────────────────────
