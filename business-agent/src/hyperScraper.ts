@@ -1,10 +1,11 @@
 /**
  * hyperScraper.ts — AI-powered lead scraper using HyperAgent
  *
- * Replaces brittle cheerio scraping with browser automation + LLM extraction.
- * Handles JS-rendered pages, anti-bot measures, dynamic content.
- *
- * Uses ANTHROPIC_API_KEY from env (free fallback to GROQ via env chain).
+ * Free-tier model chain (in order):
+ *   1. Groq        llama-3.3-70b-versatile  (free, fastest)
+ *   2. NVIDIA NIM  meta/llama-3.3-70b-instruct (free tier, top quality)
+ *   3. Gemini      gemini-2.0-flash          (free tier)
+ *   4. Anthropic   claude-haiku-4-5          (paid, last resort)
  *
  * Usage:
  *   npx tsx src/hyperScraper.ts --city "Manchester" --category "tutor" --product tutiq --limit 20
@@ -17,10 +18,55 @@
 import * as fs from 'fs'
 import * as path from 'path'
 import * as dotenv from 'dotenv'
-import { HyperAgent } from '@hyperbrowser/agent'
+import { HyperAgent, type LLMConfig } from '@hyperbrowser/agent'
 
 dotenv.config({ path: path.join(process.cwd(), '.env') })
 dotenv.config({ path: path.join(process.cwd(), '../.env.shared') })
+
+// ── Free-tier model chain ─────────────────────────────────────────────────────
+// Each entry tried in order — first one with a key wins
+function resolveLLMConfig(): LLMConfig {
+  const groqKey    = process.env.GROQ_API_KEY
+  const nvidiaKey  = process.env.NVIDIA_API_KEY
+  const geminiKey  = process.env.GEMINI_API_KEY
+  const anthropicKey = process.env.ANTHROPIC_API_KEY
+
+  if (groqKey) {
+    console.log('🆓 LLM: Groq (llama-3.3-70b-versatile) — free tier')
+    return {
+      provider: 'openai',
+      baseURL:  'https://api.groq.com/openai/v1',
+      apiKey:   groqKey,
+      model:    'llama-3.3-70b-versatile',
+    }
+  }
+  if (nvidiaKey) {
+    console.log('🆓 LLM: NVIDIA NIM (meta/llama-3.3-70b-instruct) — free tier')
+    return {
+      provider: 'openai',
+      baseURL:  'https://integrate.api.nvidia.com/v1',
+      apiKey:   nvidiaKey,
+      model:    'meta/llama-3.3-70b-instruct',
+    }
+  }
+  if (geminiKey) {
+    console.log('🆓 LLM: Gemini 2.0 Flash — free tier')
+    return {
+      provider: 'gemini',
+      apiKey:   geminiKey,
+      model:    'gemini-2.0-flash',
+    }
+  }
+  if (anthropicKey) {
+    console.log('💰 LLM: Anthropic claude-haiku (paid fallback)')
+    return {
+      provider: 'anthropic',
+      apiKey:   anthropicKey,
+      model:    'claude-haiku-4-5-20251001',
+    }
+  }
+  throw new Error('No LLM API key found. Set GROQ_API_KEY, NVIDIA_API_KEY, GEMINI_API_KEY, or ANTHROPIC_API_KEY')
+}
 
 // ── CLI args ──────────────────────────────────────────────────────────────────
 const args = process.argv.slice(2)
@@ -118,13 +164,7 @@ async function main() {
   console.log(`   Product  : ${productKey} (${product.url})`)
   console.log(`   Limit    : ${LIMIT} leads\n`)
 
-  const agent = new HyperAgent({
-    llmConfig: {
-      provider: 'anthropic',
-      apiKey:   process.env.ANTHROPIC_API_KEY ?? '',
-      options:  { model: 'claude-haiku-4-5-20251001' },  // cheapest, fast enough for extraction
-    },
-  })
+  const agent = new HyperAgent({ llm: resolveLLMConfig() })
 
   const task = `
 Go to this URL: ${searchUrl}
