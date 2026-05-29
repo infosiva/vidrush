@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // GET /api/leads — list leads with thread stats
 // PATCH /api/leads/:id — update status/notes
 import { NextRequest, NextResponse } from 'next/server'

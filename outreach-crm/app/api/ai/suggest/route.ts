@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // AI email suggestion — given lead info, suggest subject + body using Groq
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'

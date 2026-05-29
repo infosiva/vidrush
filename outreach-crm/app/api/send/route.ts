@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
@@ -5,7 +6,7 @@ import { leads, threads, messages } from '@/db/schema'
 import { eq, inArray } from 'drizzle-orm'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
+const resend = () => new Resend(process.env.RESEND_API_KEY!)
 
 // Rate limit: 10 sends/min per user (in-memory, resets on cold start)
 const sendCounts = new Map<string, { count: number; reset: number }>()
@@ -48,7 +49,7 @@ export async function POST(req: NextRequest) {
 
   for (const lead of targetLeads) {
     try {
-      const { data, error } = await resend.emails.send({
+      const { data, error } = await resend().emails.send({
         from: process.env.FROM_EMAIL ?? 'siva@outreach.app',
         to:   lead.email,
         subject,

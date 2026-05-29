@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // List all threads with status — for inbox/follow-up views
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'

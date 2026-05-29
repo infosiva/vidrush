@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // Dashboard stats — total leads, sent, opened, replied, bounced
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'

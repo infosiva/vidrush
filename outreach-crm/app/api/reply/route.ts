@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/lib/db'
@@ -5,7 +6,7 @@ import { threads, messages, leads } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY!)
+const resend = () => new Resend(process.env.RESEND_API_KEY!)
 
 export async function POST(req: NextRequest) {
   const session = await auth()
@@ -20,7 +21,7 @@ export async function POST(req: NextRequest) {
   })
   if (!thread) return NextResponse.json({ error: 'Thread not found' }, { status: 404 })
 
-  const { data, error } = await resend.emails.send({
+  const { data, error } = await resend().emails.send({
     from:    process.env.FROM_EMAIL ?? 'siva@outreach.app',
     to:      (thread as any).lead.email,
     subject: `Re: ${thread.subject}`,

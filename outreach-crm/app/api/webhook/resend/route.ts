@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // Resend webhook — handles opens, clicks, bounces, inbound replies
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'

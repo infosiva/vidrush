@@ -1,3 +1,4 @@
+export const dynamic = 'force-dynamic'
 // Vendor profile — from email, sender name, default product, signature
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
