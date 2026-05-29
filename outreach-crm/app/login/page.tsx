@@ -18,14 +18,17 @@ export default function LoginPage() {
   return (
     <div style={{ minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ width: '100%', maxWidth: 380 }}>
-        {/* Logo */}
+        {/* Logo + Hero */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>📬</div>
-          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: 0 }}>
+          <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text)', margin: '0 0 10px' }}>
             Outreach<span style={{ color: 'var(--accent)' }}>CRM</span>
           </h1>
-          <p style={{ fontSize: 13, color: 'var(--text2)', marginTop: 4 }}>
-            Send, track and reply to your leads
+          <p style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', lineHeight: 1.45, margin: '0 0 8px' }}>
+            Send cold emails that feel personal.<br />Track every reply like a CRM.
+          </p>
+          <p style={{ fontSize: 12, color: 'var(--text2)', lineHeight: 1.5, margin: '0 0 4px' }}>
+            Built for small business owners who send 20–50 emails a week — not enterprise sales teams.
           </p>
         </div>
 
@@ -65,7 +68,7 @@ export default function LoginPage() {
                 disabled={loading || !email}
                 style={{ width: '100%', padding: '10px 16px', borderRadius: 10, border: 'none', background: 'var(--accent)', color: '#fff', fontSize: 14, fontWeight: 700, cursor: loading ? 'wait' : 'pointer', opacity: loading ? 0.7 : 1, transition: 'opacity 0.15s' }}
               >
-                {loading ? 'Sending…' : 'Send magic link →'}
+                {loading ? 'Sending…' : 'Send your first campaign free — no warm-up required →'}
               </button>
             </form>
           </div>

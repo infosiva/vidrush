@@ -180,6 +180,45 @@ export default function CRMShell({ user }: { user: { name?: string | null; email
     (l.company ?? '').toLowerCase().includes(search.toLowerCase())
   )
 
+  // Next-action queue: contacted leads with no reply in 3+ days
+  const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000
+  const now = Date.now()
+  const nextActionLeads = leads.filter(l => {
+    if (l.status !== 'contacted') return false
+    const thread = l.threads?.[0]
+    if (!thread) return true // contacted but no thread recorded = stale
+    if (thread.status === 'replied') return false
+    const sent = new Date(thread.createdAt).getTime()
+    return (now - sent) >= THREE_DAYS_MS
+  })
+
+  // Reply heatmap: last 7 days (Mon–Sun sliding window)
+  function getWeekHeatmap(): boolean[] {
+    const days: boolean[] = Array(7).fill(false)
+    const today = new Date()
+    for (const lead of leads) {
+      for (const t of lead.threads ?? []) {
+        if (!t.repliedAt) continue
+        const replied = new Date(t.repliedAt)
+        const diff = Math.floor((today.getTime() - replied.getTime()) / 86400000)
+        if (diff >= 0 && diff < 7) {
+          days[6 - diff] = true
+        }
+      }
+    }
+    return days
+  }
+  const weekHeatmap = getWeekHeatmap()
+
+  // Token preview: replace {name} and {city} in text using selected lead
+  function applyTokens(text: string, lead: Lead | null): string {
+    if (!lead) return text
+    return text
+      .replace(/\{name\}/g, lead.name ?? '')
+      .replace(/\{city\}/g, lead.city ?? '')
+  }
+  const previewLead = checked.length === 1 ? leads.find(l => l.id === checked[0]) ?? selectedLead : selectedLead
+
   // ── Styles ─────────────────────────────────────────────────────────────────
   const btn = (accent = false): React.CSSProperties => ({
     padding: '8px 14px', borderRadius: 8, border: accent ? 'none' : '1px solid rgba(99,102,241,0.2)',
@@ -201,13 +240,27 @@ export default function CRMShell({ user }: { user: { name?: string | null; email
           <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{user.email}</div>
         </div>
 
-        {/* Stats pills */}
+        {/* Stats: reply heatmap + rates */}
         {stats && (
-          <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
-              <span style={{ color: 'var(--text2)' }}>Total leads</span>
-              <span style={{ fontWeight: 700, color: 'var(--text)' }}>{stats.leads.total}</span>
+          <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--border)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {/* 7-day reply heatmap */}
+            <div>
+              <div style={{ fontSize: 10, color: 'var(--text2)', fontWeight: 700, letterSpacing: '0.06em', marginBottom: 5 }}>REPLIES THIS WEEK</div>
+              <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                {['M','T','W','T','F','S','S'].map((day, i) => (
+                  <div key={i} title={day} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+                    <div style={{
+                      width: 18, height: 18, borderRadius: 4,
+                      background: weekHeatmap[i] ? 'rgba(34,197,94,0.7)' : 'rgba(255,255,255,0.06)',
+                      border: weekHeatmap[i] ? '1px solid rgba(34,197,94,0.4)' : '1px solid rgba(255,255,255,0.06)',
+                      transition: 'background 0.2s',
+                    }} />
+                    <span style={{ fontSize: 8, color: 'var(--text2)', opacity: 0.5 }}>{day}</span>
+                  </div>
+                ))}
+              </div>
             </div>
+            {/* Open + reply rates */}
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11 }}>
               <span style={{ color: 'var(--text2)' }}>Open rate</span>
               <span style={{ fontWeight: 700, color: '#f59e0b' }}>{stats.rates.openRate}%</span>
@@ -380,6 +433,35 @@ export default function CRMShell({ user }: { user: { name?: string | null; email
 
       {/* ── Main panel ──────────────────────────────────────────────────── */}
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+
+        {/* Next-action queue banner */}
+        <AnimatePresence>
+          {nextActionLeads.length > 0 && (
+            <motion.div
+              key="next-action"
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.2, ease: EASE }}
+              onClick={() => { setFilter('contacted'); setCompose(true); setChecked(nextActionLeads.map(l => l.id)) }}
+              style={{
+                position: 'relative', zIndex: 10,
+                height: 48, display: 'flex', alignItems: 'center', padding: '0 20px', gap: 10,
+                background: 'rgba(245,158,11,0.08)', borderBottom: '1px solid rgba(245,158,11,0.25)',
+                cursor: 'pointer', flexShrink: 0,
+                transition: 'background 0.15s',
+              }}
+              whileHover={{ background: 'rgba(245,158,11,0.13)' } as any}
+            >
+              <span style={{ fontSize: 14 }}>⚡</span>
+              <span style={{ fontSize: 12, color: '#f59e0b', fontWeight: 700 }}>
+                {nextActionLeads.length} prospect{nextActionLeads.length !== 1 ? 's' : ''} haven&apos;t replied in 3 days — ready for follow-up
+              </span>
+              <span style={{ marginLeft: 'auto', fontSize: 11, color: '#f59e0b', opacity: 0.7, fontWeight: 600 }}>Click to compose →</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <AnimatePresence mode="wait">
 
         {/* Compose panel */}
@@ -404,15 +486,28 @@ export default function CRMShell({ user }: { user: { name?: string | null; email
                 <input value={subject} onChange={e => setSubject(e.target.value)}
                   placeholder="Use {name} and {city} as placeholders"
                   style={{ width: '100%', padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.04)', color: 'var(--text)', fontSize: 13, outline: 'none', boxSizing: 'border-box', marginTop: 4 }} />
+                {previewLead && subject && (subject.includes('{name}') || subject.includes('{city}')) && (
+                  <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 4, opacity: 0.7 }}>
+                    Preview: {applyTokens(subject, previewLead)}
+                  </div>
+                )}
               </div>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                 <label style={{ fontSize: 11, color: 'var(--text2)', fontWeight: 700, letterSpacing: '0.06em' }}>BODY</label>
                 <textarea value={body} onChange={e => setBody(e.target.value)}
                   placeholder="Hi {name},&#10;&#10;..."
                   style={{ flex: 1, padding: '9px 12px', borderRadius: 8, border: '1px solid var(--border)', background: 'rgba(255,255,255,0.04)', color: 'var(--text)', fontSize: 13, outline: 'none', resize: 'none', lineHeight: 1.6, marginTop: 4, minHeight: 240 }} />
+                {previewLead && body && (body.includes('{name}') || body.includes('{city}')) && (
+                  <div style={{ fontSize: 11, color: 'var(--text2)', marginTop: 4, opacity: 0.7, whiteSpace: 'pre-wrap', maxHeight: 56, overflow: 'hidden' }}>
+                    Preview: {applyTokens(body, previewLead).slice(0, 120)}{applyTokens(body, previewLead).length > 120 ? '…' : ''}
+                  </div>
+                )}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 11, color: 'var(--text2)' }}>✅ Day-3 follow-up auto-scheduled</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <span style={{ fontSize: 11, color: 'var(--text2)' }}>✅ Day-3 follow-up auto-scheduled</span>
+                  <span style={{ fontSize: 11, color: 'var(--text2)' }}>&#9200; Sending in recipient&apos;s business hours (9am–5pm local)</span>
+                </div>
                 <motion.button whileTap={{ scale: 0.97 }} onClick={sendEmail} disabled={sending || !subject || !body || checked.length === 0}
                   style={{ ...btn(true), fontSize: 13, padding: '10px 20px', opacity: sending ? 0.6 : 1 }}>
                   {sending ? 'Sending…' : `Send to ${checked.length} →`}
