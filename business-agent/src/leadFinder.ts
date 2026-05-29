@@ -278,12 +278,26 @@ async function getPlaceDetails(placeId: string): Promise<PlaceResult> {
 
 // ── Guess email from website domain ──────────────────────────────────────────
 function guessEmail(name: string, website: string): string {
-  if (!website) return ''
-  try {
-    const domain = new URL(website.startsWith('http') ? website : `https://${website}`).hostname
-      .replace(/^www\./, '')
-    return `info@${domain}`
-  } catch { return '' }
+  if (website) {
+    try {
+      const domain = new URL(website.startsWith('http') ? website : `https://${website}`).hostname
+        .replace(/^www\./, '')
+      return `info@${domain}`
+    } catch { /* fallthrough */ }
+  }
+  // Guess from business name — works for small local businesses
+  // e.g. "Rush Hair Manchester" → info@rushhair.co.uk (not verified, needs Hunter check)
+  if (name) {
+    const slug = name
+      .toLowerCase()
+      .replace(/[^a-z0-9\s]/g, '')
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)       // first 2 words only
+      .join('')
+    if (slug.length >= 4) return `info@${slug}.co.uk`
+  }
+  return ''
 }
 
 // ── CSV helpers ───────────────────────────────────────────────────────────────
