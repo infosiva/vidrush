@@ -9,12 +9,14 @@
     "dev": "node --import tsx/esm src/index.ts",
     "leads": "npx tsx src/leadFinder.ts",
     "leads:apollo": "npx tsx src/apolloFinder.ts",
+    "leads:hyper": "npx tsx src/hyperScraper.ts",
     "send": "npx tsx src/emailSender.ts",
     "followup": "npx tsx src/followUpSender.ts",
     "followup:dry": "npx tsx src/followUpSender.ts --dry-run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "@hyperbrowser/agent": "^1.1.2",
     "cheerio": "^1.2.0",
     "dotenv": "^16.4.5",
     "node-fetch": "^3.3.2",
