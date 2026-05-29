@@ -137,23 +137,82 @@ Free at speakiq.app
 
 Siva`,
   },
+
+  bookingcall: {
+    url: 'bookingcall.app',
+    subject: (biz, city) => `Never miss a booking call at ${biz} again`,
+    body: (biz, city) =>
+`Hi,
+
+Missed calls = missed bookings. BookingCall is an AI receptionist that answers calls 24/7, takes bookings, and sends confirmation texts — while you focus on the work.
+
+No hardware. No monthly contract to start. Works for salons, clinics, and any appointment-based business.
+
+Try it free at bookingcall.app
+
+Siva`,
+  },
+
+  invoicemint: {
+    url: 'invoicemint.cloud',
+    subject: (biz, city) => `Send professional invoices in 30 seconds — free`,
+    body: (biz, city) =>
+`Hi,
+
+If you're still copy-pasting invoice templates, InvoiceMint is worth trying.
+
+Fill in the job, the amount, the client — AI formats a professional PDF invoice in 30 seconds. Download and send.
+
+Free at invoicemint.cloud
+
+Siva`,
+  },
+
+  agencyos: {
+    url: 'agencyos.vercel.app',
+    subject: (biz, city) => `One brief → blog + social + email done for ${biz}`,
+    body: (biz, city) =>
+`Hi,
+
+Creating content for ${biz} is time-consuming. AgencyOS takes one brief and generates a blog post, social captions, and email draft all at once — in under 2 minutes.
+
+Built for small businesses that don't have a marketing team.
+
+Free to try at agencyos.vercel.app
+
+Siva`,
+  },
 }
 
 // ── Category → product suggestions ───────────────────────────────────────────
 const CAT_PRODUCT: Record<string, string> = {
-  tutoring:         'tutiq',
-  tutor:            'tutiq',
-  school:           'tutiq',
-  'language school':'speakiq',
-  restaurant:       'draftcal',
-  cafe:             'draftcal',
-  coffee:           'draftcal',
-  gym:              'draftcal',
-  salon:            'draftcal',
-  pub:              'kwizzo',
-  bar:              'kwizzo',
-  'travel agent':   'roamplan',
-  hotel:            'roamplan',
+  tutoring:           'tutiq',
+  tutor:              'tutiq',
+  school:             'tutiq',
+  'language school':  'speakiq',
+  restaurant:         'draftcal',
+  cafe:               'draftcal',
+  coffee:             'draftcal',
+  gym:                'draftcal',
+  salon:              'bookingcall',
+  hairdresser:        'bookingcall',
+  barber:             'bookingcall',
+  dentist:            'bookingcall',
+  clinic:             'bookingcall',
+  physio:             'bookingcall',
+  pub:                'kwizzo',
+  bar:                'kwizzo',
+  'travel agent':     'roamplan',
+  hotel:              'roamplan',
+  guesthouse:         'roamplan',
+  freelancer:         'invoicemint',
+  electrician:        'invoicemint',
+  plumber:            'invoicemint',
+  builder:            'invoicemint',
+  cleaner:            'invoicemint',
+  accountant:         'agencyos',
+  'marketing agency': 'agencyos',
+  'estate agent':     'agencyos',
 }
 
 // ── Types ─────────────────────────────────────────────────────────────────────

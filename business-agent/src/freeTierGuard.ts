@@ -183,27 +183,26 @@ export async function osmFindBusinesses(
     bar:               ['amenity', 'bar'],
     'travel agent':    ['shop', 'travel_agency'],
     hotel:             ['tourism', 'hotel'],
+    salon:             ['shop', 'hairdresser'],
+    hairdresser:       ['shop', 'hairdresser'],
+    barber:            ['shop', 'barber'],
+    dentist:           ['amenity', 'dentist'],
+    clinic:            ['amenity', 'clinic'],
+    physio:            ['amenity', 'physiotherapist'],
+    guesthouse:        ['tourism', 'guest_house'],
+    electrician:       ['craft', 'electrician'],
+    plumber:           ['craft', 'plumber'],
+    builder:           ['craft', 'builder'],
+    cleaner:           ['shop', 'cleaning'],
   }
 
   const [k, v] = tagMap[category.toLowerCase()] ?? ['amenity', 'yes']
 
-  // Run TWO queries: exact amenity tag + name keyword match — union gives much more results
-  const query = [
-    `[out:json][timeout:30];`,
-    `(`,
-    // Exact amenity match
-    `node["${k}"="${v}"](around:${radiusM},${lat},${lng});`,
-    `way["${k}"="${v}"](around:${radiusM},${lat},${lng});`,
-    // Name keyword match (catches businesses not tagged with amenity)
-    `node["name"~"${category}",i](around:${radiusM},${lat},${lng});`,
-    `way["name"~"${category}",i](around:${radiusM},${lat},${lng});`,
-    `);`,
-    `out body;`,
-  ].join('')
+  // Simple targeted query — exact tag only, 10km radius, 25s timeout
+  const query = `[out:json][timeout:25];(node["${k}"="${v}"](around:${radiusM},${lat},${lng});way["${k}"="${v}"](around:${radiusM},${lat},${lng}););out body;`
 
-  // Use GET with encoded query — more reliable than POST for Overpass
-  const overpassUrl = `https://overpass-api.de/api/interpreter?data=${encodeURIComponent(query)}`
-  const data = await fetchJson<any>(overpassUrl)
+  // Use POST to overpass-api.de
+  const data = await postJson<any>('https://overpass-api.de/api/interpreter', `data=${encodeURIComponent(query)}`)
 
   return (data.elements ?? []).map((el: any) => ({
     name:    el.tags?.name ?? '',
@@ -245,22 +244,35 @@ function fetchJson<T>(url: string, extraHeaders: Record<string, string> = {}): P
 function postJson<T>(url: string, body: string): Promise<T> {
   return new Promise((resolve, reject) => {
     const parsed = new URL(url)
+    const bodyBuf = Buffer.from(body, 'utf8')
     const opts = {
       hostname: parsed.hostname,
-      path:     parsed.pathname,
+      port:     443,
+      path:     parsed.pathname + (parsed.search || ''),
       method:   'POST',
-      headers:  { 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': Buffer.byteLength(body) },
+      headers:  {
+        'Content-Type':   'application/x-www-form-urlencoded',
+        'Content-Length': bodyBuf.length,
+        'Accept':         '*/*',
+        'User-Agent':     'NammaTamil-LeadFinder/1.0 (info.siva@gmail.com)',
+      },
     }
     const req = https.request(opts, res => {
+      // Follow redirects
+      if (res.statusCode && res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        postJson<T>(res.headers.location, body).then(resolve).catch(reject)
+        return
+      }
       const chunks: Buffer[] = []
-      res.on('data', c => chunks.push(c))
+      res.on('data', (c: Buffer) => chunks.push(c))
       res.on('end', () => {
-        try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8'))) }
-        catch (e) { reject(e) }
+        const text = Buffer.concat(chunks).toString('utf8')
+        try { resolve(JSON.parse(text)) }
+        catch (e) { reject(new Error(`Overpass JSON parse failed (${res.statusCode}): ${text.slice(0,120)}`)) }
       })
     })
     req.on('error', reject)
-    req.write(body)
+    req.write(bodyBuf)
     req.end()
   })
 }

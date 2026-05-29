@@ -9,7 +9,9 @@
     "dev": "node --import tsx/esm src/index.ts",
     "leads": "npx tsx src/leadFinder.ts",
     "leads:apollo": "npx tsx src/apolloFinder.ts",
-    "send": "npx tsx src/emailSender.ts"
+    "send": "npx tsx src/emailSender.ts",
+    "followup": "npx tsx src/followUpSender.ts",
+    "followup:dry": "npx tsx src/followUpSender.ts --dry-run"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
