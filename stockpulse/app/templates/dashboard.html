@@ -132,6 +132,7 @@ window.__notableMovers = [
                         {{ chart_data.name if chart_data and chart_data.name else 'S&P 500' }}
                         <span id="livePrice" style="font-size:22px; margin-left:8px; font-variant-numeric:tabular-nums;"></span>
                         <span id="liveDelta" style="font-size:13px; font-weight:600; margin-left:6px;"></span>
+                        <span id="aiSentimentBadge" style="display:none; margin-left:10px; font-size:11px; font-weight:700; padding:3px 10px; border-radius:20px; vertical-align:middle; letter-spacing:0.04em;"></span>
                     </h2>
                     <p style="font-size:11px; color:var(--text-muted); margin-top:2px;">Click any index above to switch chart</p>
                 </div>
@@ -657,6 +658,36 @@ document.addEventListener('DOMContentLoaded', function() {
         const ld = document.getElementById('liveDelta');
         if (lp) { lp.textContent = '$' + cur.toLocaleString(undefined, {minimumFractionDigits:2,maximumFractionDigits:2}); lp.style.color = up ? 'var(--green)' : 'var(--red)'; }
         if (ld) { ld.textContent = (up?'▲':'▼') + ' ' + Math.abs(dpct).toFixed(2) + '%'; ld.style.color = up ? 'var(--green)' : 'var(--red)'; }
+
+        // AI Sentiment badge — derived from price momentum + RSI if available
+        const badge = document.getElementById('aiSentimentBadge');
+        if (badge) {
+            const rsiVals = CD.rsi ? CD.rsi.filter(v => v != null) : [];
+            const lastRsi = rsiVals.length ? rsiVals[rsiVals.length - 1] : null;
+            let sentiment, bgColor, fgColor;
+            if (lastRsi !== null) {
+                if (lastRsi >= 60 || (up && dpct > 1.5)) {
+                    sentiment = '🟢 Bullish'; bgColor = 'rgba(63,185,80,0.18)'; fgColor = 'var(--green)';
+                } else if (lastRsi <= 40 || (!up && dpct < -1.5)) {
+                    sentiment = '🔴 Bearish'; bgColor = 'rgba(248,81,73,0.18)'; fgColor = 'var(--red)';
+                } else {
+                    sentiment = '🟡 Neutral'; bgColor = 'rgba(210,153,34,0.18)'; fgColor = 'var(--gold)';
+                }
+            } else {
+                if (up && dpct > 1) {
+                    sentiment = '🟢 Bullish'; bgColor = 'rgba(63,185,80,0.18)'; fgColor = 'var(--green)';
+                } else if (!up && dpct < -1) {
+                    sentiment = '🔴 Bearish'; bgColor = 'rgba(248,81,73,0.18)'; fgColor = 'var(--red)';
+                } else {
+                    sentiment = '🟡 Neutral'; bgColor = 'rgba(210,153,34,0.18)'; fgColor = 'var(--gold)';
+                }
+            }
+            badge.textContent = 'AI: ' + sentiment;
+            badge.style.background = bgColor;
+            badge.style.color = fgColor;
+            badge.style.border = '1px solid ' + fgColor.replace('var(--green)', 'rgba(63,185,80,0.35)').replace('var(--red)', 'rgba(248,81,73,0.35)').replace('var(--gold)', 'rgba(210,153,34,0.35)');
+            badge.style.display = 'inline-block';
+        }
     }
 
     const up = prices.length >= 2 && prices[prices.length-1] >= prices[0];

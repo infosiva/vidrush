@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}StockPulse — Free AI Stock Market Dashboard &amp; Analysis{% endblock %}
-{% block meta_description %}Free AI-powered stock market dashboard with real-time quotes, interactive charts, technical indicators, and an AI analyst you can ask anything. No signup needed.{% endblock %}
-{% block og_title %}StockPulse — Free AI Stock Market Dashboard{% endblock %}
-{% block og_description %}Real-time stock quotes, technical analysis charts, AI-powered stock research, and broker comparisons — all free, no account required.{% endblock %}
+{% block title %}StockPulse — Free AI Stock Insights, No Paywall, No Delay{% endblock %}
+{% block meta_description %}Free AI stock insights in seconds — real-time analysis of any ticker with sentiment, technicals, and plain-English explanations. No subscription, no registration.{% endblock %}
+{% block og_title %}StockPulse — Free AI Stock Insights{% endblock %}
+{% block og_description %}AI stock insights in seconds — no paywall, no delay, no noise. Real-time analysis of any stock ticker, free forever. Better than Seeking Alpha and TipRanks for everyday investors.{% endblock %}
 {% block canonical %}/{% endblock %}
 
 {% block content %}
@@ -15,10 +15,10 @@
     Live market data · No signup required
   </div>
   <h1 class="text-4xl md:text-5xl font-black text-[#1A1A18] leading-tight mb-4">
-    Your Free AI<br><span class="text-[#D97757]">Stock Market Dashboard</span>
+    AI stock insights in seconds —<br><span class="text-[#D97757]">no paywall, no delay, no noise.</span>
   </h1>
   <p class="text-lg text-[#6B6460] max-w-2xl mx-auto mb-8">
-    Real-time quotes, interactive charts, technical analysis, and an AI analyst ready to answer any question about stocks — all in one place, completely free.
+    Real-time AI analysis of any stock ticker — sentiment, technicals, and what it means for you.
   </p>
   <div class="flex flex-wrap items-center justify-center gap-3">
     <a href="/dashboard/" class="bg-[#D97757] hover:bg-[#C5653F] text-white px-6 py-3 rounded-xl font-bold text-sm transition shadow-sm">
@@ -27,6 +27,58 @@
     <a href="/brokers" class="bg-white border border-[#E8E0D5] hover:border-[#D97757] text-[#1A1A18] px-6 py-3 rounded-xl font-bold text-sm transition">
       Compare Brokers
     </a>
+  </div>
+</section>
+
+<!-- ── Competitor Comparison Table ───────────────────────────────── -->
+<section class="py-10 border-b border-[#E8E0D5]">
+  <div class="max-w-3xl mx-auto">
+    <h2 class="text-xl font-black text-[#1A1A18] text-center mb-2">Why StockPulse?</h2>
+    <p class="text-sm text-[#6B6460] text-center mb-6">Everything the paywalled platforms charge for — free, instant, no account required.</p>
+    <div class="overflow-x-auto">
+      <table style="width:100%; border-collapse:collapse; font-size:14px;">
+        <thead>
+          <tr style="background:#F7F4F0; border-bottom:2px solid #E8E0D5;">
+            <th style="padding:12px 16px; text-align:left; color:#1A1A18; font-weight:700;">Feature</th>
+            <th style="padding:12px 16px; text-align:center; color:#D97757; font-weight:700;">StockPulse</th>
+            <th style="padding:12px 16px; text-align:center; color:#6B6460; font-weight:600;">Seeking Alpha</th>
+            <th style="padding:12px 16px; text-align:center; color:#6B6460; font-weight:600;">TipRanks</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #E8E0D5;">
+            <td style="padding:11px 16px; color:#1A1A18; font-weight:500;">AI instant analysis</td>
+            <td style="padding:11px 16px; text-align:center;"><span style="color:#059669; font-weight:700;">✓ Free</span></td>
+            <td style="padding:11px 16px; text-align:center; color:#D97757;">✗ Paywalled</td>
+            <td style="padding:11px 16px; text-align:center; color:#D97757;">✗ $29/mo</td>
+          </tr>
+          <tr style="border-bottom:1px solid #E8E0D5; background:#FAFAF8;">
+            <td style="padding:11px 16px; color:#1A1A18; font-weight:500;">No registration needed</td>
+            <td style="padding:11px 16px; text-align:center;"><span style="color:#059669; font-weight:700;">✓</span></td>
+            <td style="padding:11px 16px; text-align:center; color:#D97757;">✗</td>
+            <td style="padding:11px 16px; text-align:center; color:#D97757;">✗</td>
+          </tr>
+          <tr style="border-bottom:1px solid #E8E0D5;">
+            <td style="padding:11px 16px; color:#1A1A18; font-weight:500;">Real-time data</td>
+            <td style="padding:11px 16px; text-align:center;"><span style="color:#059669; font-weight:700;">✓ Live</span></td>
+            <td style="padding:11px 16px; text-align:center; color:#6B6460;">Delayed (free)</td>
+            <td style="padding:11px 16px; text-align:center; color:#6B6460;">Delayed (free)</td>
+          </tr>
+          <tr style="border-bottom:1px solid #E8E0D5; background:#FAFAF8;">
+            <td style="padding:11px 16px; color:#1A1A18; font-weight:500;">Technical charts + indicators</td>
+            <td style="padding:11px 16px; text-align:center;"><span style="color:#059669; font-weight:700;">✓ Free</span></td>
+            <td style="padding:11px 16px; text-align:center; color:#D97757;">✗ Premium only</td>
+            <td style="padding:11px 16px; text-align:center; color:#D97757;">✗ Premium only</td>
+          </tr>
+          <tr>
+            <td style="padding:11px 16px; color:#1A1A18; font-weight:500;">AI chat analyst</td>
+            <td style="padding:11px 16px; text-align:center;"><span style="color:#059669; font-weight:700;">✓ Free</span></td>
+            <td style="padding:11px 16px; text-align:center; color:#D97757;">✗ $19.99/mo+</td>
+            <td style="padding:11px 16px; text-align:center; color:#D97757;">✗ $29/mo+</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </section>
 
