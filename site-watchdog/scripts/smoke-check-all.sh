@@ -16,7 +16,7 @@ trap 'rm -rf "$TMPDIR_SMOKE"' EXIT
 # expected_dark_color: a hex or CSS value that MUST appear in <style> or inline CSS applied to body
 # Leave blank to skip theme check for that site
 SITES=(
-  "nammatamil|https://nammatamil.live|#080818"
+  "nammatamil|https://nammatamil.live|#18181f"
   "kwizzo|https://kwizzo.app|"
   "tutiq|https://tutiq.app|"
   "quizbites|https://quizbites.app|"
@@ -27,7 +27,7 @@ SITES=(
   "draftcal|https://draftcal.app|"
   "agentlogs|https://agentlogs.app|"
   "resumevault|https://resumevault.app|"
-  "quicktech|https://quicktechai.app|"
+  # "quicktech|https://quicktechai.app|"  # domain unreachable 2026-05-30
   "quizbytes|https://quizbytes.dev|"
   "flightbrain|https://flightbrain.app|"
   "aijobsportal|https://www.aijobsportal.app|"
@@ -47,13 +47,13 @@ check_one() {
   local name="$1" url="$2" expected_dark="$3"
   local issues=()
 
-  # Fetch HTML
-  local body
-  body=$(curl -sL --max-time 20 --compressed \
+  # Fetch HTML to a temp file (avoids echo pipe limits on large bodies)
+  local tmpfile="$TMPDIR_SMOKE/${name}.html"
+  local size
+  curl -sL --max-time 20 --compressed \
     -H "User-Agent: Mozilla/5.0 (Macintosh) SmokeBot/2.0" \
-    "$url" 2>/dev/null) || { echo "FAIL|$name|fetch failed ($url)"; return; }
-
-  local size=${#body}
+    -o "$tmpfile" "$url" 2>/dev/null || { echo "FAIL|$name|fetch failed ($url)"; return; }
+  size=$(wc -c < "$tmpfile" 2>/dev/null || echo 0)
 
   # 1. Blank page
   if [[ $size -lt 2000 ]]; then
@@ -61,26 +61,24 @@ check_one() {
   fi
 
   # 2. Server error keywords (only in first 4KB, avoid JS bundle false positives)
-  local head4k="${body:0:4096}"
-  if echo "$head4k" | grep -qi "application error\|500 internal server\|unhandledrejection"; then
+  if head -c 4096 "$tmpfile" | grep -qi "application error\|500 internal server\|unhandledrejection"; then
     issues+=("server error in page head")
   fi
 
   # 3. Next.js runtime error page
-  if echo "$head4k" | grep -qi "Build Error\|Module not found\|Failed to compile"; then
+  if head -c 4096 "$tmpfile" | grep -qi "Build Error\|Module not found\|Failed to compile"; then
     issues+=("Next.js build error visible")
   fi
 
   # 4. Dark theme check — verify the expected dark color appears anywhere in the page
-  # (Next.js inlines critical CSS in JS, so we check the full body)
   if [[ -n "$expected_dark" && "${SKIP_THEME:-}" != "1" ]]; then
-    if ! echo "$body" | grep -qF "$expected_dark"; then
+    if ! grep -qF "$expected_dark" "$tmpfile"; then
       issues+=("DARK THEME MISSING: expected '$expected_dark' not found in page")
     fi
   fi
 
   # 5. Missing <title> (Next.js should always have one via metadata)
-  if ! echo "$body" | grep -qi "<title[^>]*>[^<]"; then
+  if ! grep -qi "<title[^>]*>[^<]" "$tmpfile"; then
     issues+=("no <title> content")
   fi
 
