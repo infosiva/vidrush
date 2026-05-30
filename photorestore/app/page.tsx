@@ -9,20 +9,35 @@ export default function Home() {
       <Nav />
 
       {/* Hero */}
-      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 md:pt-28 md:pb-32">
+      <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-12 md:pt-28 md:pb-32">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
           <div className="animate-fadeUp">
             <span className="inline-block text-xs font-semibold text-accent tracking-wide mb-4 border border-accent/20 rounded-full px-3 py-1 bg-accent/5">
               AI Photo Restoration
             </span>
             <h1 className="font-display text-5xl md:text-6xl font-bold text-primary leading-[1.08] mb-6">
-              Bring old<br />
-              <em className="not-italic text-accent">memories</em><br />
-              back to life.
+              Restore old photos<br />
+              <em className="not-italic text-accent">in seconds</em> —<br />
+              free.
             </h1>
-            <p className="text-text-secondary text-lg leading-relaxed mb-8 max-w-md">
-              Upload a damaged, faded, or black-and-white photo. Our AI removes scratches, enhances faces, and adds natural color — in seconds.
+            <p className="text-text-secondary text-lg leading-relaxed mb-6 max-w-md">
+              Upload any damaged, faded, or blurry photo. AI restores it to high resolution instantly — no account, no subscription, no waiting.
             </p>
+            {/* Trust pills */}
+            <div className="flex flex-wrap gap-2 mb-8">
+              {[
+                '✓ No account',
+                '✓ Free to try',
+                '✓ High resolution output',
+              ].map(pill => (
+                <span
+                  key={pill}
+                  className="text-xs font-semibold px-3 py-1.5 rounded-full border border-accent/20 bg-accent/5 text-accent"
+                >
+                  {pill}
+                </span>
+              ))}
+            </div>
             <div className="flex flex-wrap gap-4 items-center">
               <a
                 href="#upload"
@@ -30,7 +45,7 @@ export default function Home() {
               >
                 Restore a Photo Free
               </a>
-              <span className="text-text-muted text-sm">No account needed · 2 free restorations</span>
+              <span className="text-text-muted text-sm">2 free restorations · No credit card</span>
             </div>
           </div>
           <div className="animate-fadeUp" style={{ animationDelay: '100ms' }}>
@@ -41,7 +56,7 @@ export default function Home() {
       </section>
 
       {/* Upload Zone */}
-      <section id="upload" className="bg-surface-muted py-20 md:py-28">
+      <section id="upload" className="bg-surface-muted py-10 md:py-28">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="font-display text-4xl font-bold text-primary mb-3">Try it now</h2>
           <p className="text-text-secondary mb-10 max-w-xl mx-auto">
@@ -52,7 +67,7 @@ export default function Home() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="py-20 md:py-28">
+      <section id="how-it-works" className="py-10 md:py-28">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-14">
             <h2 className="font-display text-4xl font-bold text-primary mb-3">How it works</h2>
@@ -90,7 +105,7 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section className="bg-surface-muted py-20 md:py-28">
+      <section className="bg-surface-muted py-10 md:py-28">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-14">
             <h2 className="font-display text-4xl font-bold text-primary mb-3">What gets restored</h2>
@@ -133,7 +148,7 @@ export default function Home() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="py-20 md:py-28">
+      <section id="pricing" className="py-10 md:py-28">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="mb-14 text-center">
             <h2 className="font-display text-4xl font-bold text-primary mb-3">Simple pricing</h2>

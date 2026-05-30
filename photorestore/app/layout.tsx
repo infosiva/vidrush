@@ -3,9 +3,9 @@ import Script from 'next/script'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'PhotoRestore — Bring Old Photos Back to Life',
-  description: 'AI-powered photo restoration. Fix scratches, enhance faces, add color to black & white photos in seconds.',
-  keywords: 'restore old photos, photo restoration, AI photo repair, colorize photos, fix scratched photos',
+  title: 'PhotoRestore — Restore Old Photos Free. No Account, No Subscription.',
+  description: 'Upload any damaged, faded, or blurry photo — AI restores it to high resolution instantly. Free to try, no account needed, no subscription.',
+  keywords: 'restore old photos free, photo restoration no account, AI photo repair online, colorize photos free, fix scratched photos instantly',
   metadataBase: new URL('https://photorestore.app'),
   openGraph: {
     title: 'PhotoRestore — Bring Old Photos Back to Life',
