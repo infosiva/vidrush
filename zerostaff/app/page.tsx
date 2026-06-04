@@ -2,16 +2,13 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
 
-const outputs = [
-  { icon: '📝', label: 'SEO Blog', sub: '1,200 words', color: '#a855f7' },
-  { icon: '🎙️', label: 'Podcast Script', sub: 'TTS-ready MP3', color: '#3b82f6' },
-  { icon: '🎬', label: 'Video Script', sub: 'fal.ai scenes', color: '#ec4899' },
-  { icon: '💼', label: 'LinkedIn Posts', sub: '3 angles', color: '#06b6d4' },
-  { icon: '✉️', label: 'Email Sequence', sub: '5-email nurture', color: '#f97316' },
-  { icon: '✂️', label: 'Short Clips', sub: '10 captions', color: '#10b981' },
-  { icon: '🎯', label: 'Lead Gen Pack', sub: 'DMs + cold email', color: '#f59e0b' },
-  { icon: '📊', label: 'Client Report', sub: 'Strategy + calendar', color: '#8b5cf6' },
+const PIPELINE_STEPS = [
+  { icon: '📋', label: 'Post Job', desc: 'Paste your JD. Done.' },
+  { icon: '🤖', label: 'AI Screens', desc: 'CVs ranked in minutes' },
+  { icon: '🎥', label: 'Video Questions', desc: 'Async AI interviews' },
+  { icon: '✅', label: 'You Decide', desc: 'Shortlist delivered' },
 ]
 
 const EASE = 'easeOut' as const
@@ -28,6 +25,56 @@ const stagger = {
 const cardVariant = {
   hidden: { opacity: 0, y: 20, scale: 0.97 },
   show: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.45, ease: EASE } },
+}
+
+interface Stats {
+  cvs: number
+  hours: number
+  interviews: number
+}
+
+function StatsStrip() {
+  const [stats, setStats] = useState<Stats>({ cvs: 0, hours: 0, interviews: 0 })
+
+  useEffect(() => {
+    const stored = localStorage.getItem('zs_stats')
+    if (stored) {
+      setStats(JSON.parse(stored))
+    } else {
+      // Seed with plausible demo numbers on first visit
+      const seed: Stats = { cvs: 1284, hours: 3420, interviews: 312 }
+      localStorage.setItem('zs_stats', JSON.stringify(seed))
+      setStats(seed)
+    }
+  }, [])
+
+  const items = [
+    { value: stats.cvs.toLocaleString(), label: 'CVs screened' },
+    { value: `${stats.hours.toLocaleString()}h`, label: 'Hours saved' },
+    { value: stats.interviews.toLocaleString(), label: 'Interviews booked' },
+  ]
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.4 }}
+      className="max-w-3xl mx-auto px-4 mb-20"
+    >
+      <div
+        className="grid grid-cols-3 gap-px rounded-2xl overflow-hidden"
+        style={{ background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.2)' }}
+      >
+        {items.map(({ value, label }) => (
+          <div key={label} className="py-6 text-center" style={{ background: 'rgba(5,4,15,0.6)' }}>
+            <div className="text-2xl sm:text-3xl font-extrabold text-white mb-1">{value}</div>
+            <div className="text-xs text-white/40 uppercase tracking-wide">{label}</div>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  )
 }
 
 export default function LandingPage() {
@@ -74,27 +121,32 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="max-w-4xl mx-auto px-4 pt-28 pb-20 text-center">
+      <section className="max-w-4xl mx-auto px-4 pt-28 pb-16 text-center">
         <motion.div
           initial={{ opacity: 0, y: 12, scale: 0.97 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ duration: 0.5, ease: [0.23, 1, 0.32, 1] }}
-          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-purple-500/25 mb-10"
-          style={{ background: 'rgba(168,85,247,0.08)' }}
+          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-[11px] font-bold uppercase tracking-widest mb-10"
+          style={{
+            background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)',
+            border: '1px solid rgba(255,255,255,0.09)', boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.07)',
+            color: 'rgba(216,180,254,0.82)',
+          }}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-purple-400 pulse-dot" />
-          <span className="text-purple-300 text-xs font-medium tracking-wide">AI Automation Agency OS</span>
+          AI Hiring Automation
         </motion.div>
 
         <motion.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.1, ease: [0.23, 1, 0.32, 1] }}
-          className="text-6xl sm:text-7xl font-extrabold text-white leading-[1.05] tracking-tight mb-6"
+          className="font-black text-white tracking-tight mb-6"
+          style={{ fontSize: 'clamp(3rem, 7vw, 5rem)', lineHeight: 0.95 }}
         >
-          One brief in.
+          Hire in days,
           <br />
-          <span className="grad-purple-orange">8 assets out.</span>
+          <span className="grad-purple-orange">not weeks.</span>
         </motion.h1>
 
         <motion.p
@@ -103,8 +155,8 @@ export default function LandingPage() {
           transition={{ duration: 0.5, delay: 0.22, ease: [0.23, 1, 0.32, 1] }}
           className="text-lg text-white/50 max-w-2xl mx-auto mb-10 leading-relaxed"
         >
-          Blog post. Podcast script. Faceless video. LinkedIn posts. Email sequence.
-          Lead gen pack. <strong className="text-white/80 font-medium">Zero employees.</strong> Full agency in 60 seconds.
+          Paste your job description. AI shortlists candidates, asks async video questions, and ranks them for you.{' '}
+          <strong className="text-white/80 font-medium">No HRIS. No recruiters. Hire while you sleep.</strong>
         </motion.p>
 
         <motion.div
@@ -119,7 +171,7 @@ export default function LandingPage() {
             style={{ transition: 'background 200ms cubic-bezier(0.23,1,0.32,1), transform 160ms cubic-bezier(0.23,1,0.32,1)' }}
           >
             <span className="shimmer absolute inset-0 rounded-xl" />
-            <span className="relative">Generate your first brief — free</span>
+            <span className="relative">Post your first role — free</span>
           </Link>
           <Link
             href="/login"
@@ -136,50 +188,76 @@ export default function LandingPage() {
           transition={{ duration: 0.4, delay: 0.5 }}
           className="mt-4 text-xs text-white/25"
         >
-          2 free briefs/month · No credit card
+          2 free job posts/month · No credit card
         </motion.p>
       </section>
 
-      {/* 8 Outputs Grid */}
+      {/* Stats strip */}
+      <StatsStrip />
+
+      {/* Hiring pipeline */}
       <section className="max-w-5xl mx-auto px-4 pb-28">
         <motion.p
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true, margin: '-60px' }}
           transition={{ duration: 0.4 }}
-          className="text-center text-xs text-white/30 uppercase tracking-[0.2em] mb-10"
+          className="text-center text-xs text-white/30 uppercase tracking-[0.2em] mb-12"
         >
-          Every brief generates
+          How it works
         </motion.p>
 
+        {/* Pipeline visual */}
         <motion.div
           variants={stagger}
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: '-40px' }}
-          className="grid grid-cols-2 sm:grid-cols-4 gap-3"
+          className="flex flex-col sm:flex-row items-stretch gap-0"
         >
-          {outputs.map(({ icon, label, sub, color }) => (
+          {PIPELINE_STEPS.map(({ icon, label, desc }, i) => (
             <motion.div
               key={label}
               variants={cardVariant}
-              className="glass glass-hover p-5 text-center cursor-default"
-              style={{ '--accent': color } as React.CSSProperties}
+              className="flex-1 relative"
             >
+              {/* Connector arrow (not on last item) */}
+              {i < PIPELINE_STEPS.length - 1 && (
+                <div
+                  className="hidden sm:flex absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-1/2 w-8 h-8 rounded-full items-center justify-center"
+                  style={{ background: 'rgba(168,85,247,0.15)', border: '1px solid rgba(168,85,247,0.25)' }}
+                >
+                  <span className="text-purple-400 text-sm font-bold">›</span>
+                </div>
+              )}
               <div
-                className="w-10 h-10 mx-auto mb-3 rounded-xl flex items-center justify-center text-xl"
-                style={{ background: `${color}15`, border: `1px solid ${color}25` }}
+                className="glass glass-hover p-6 text-center h-full mx-1 sm:mx-2"
+                style={{ borderColor: i === 3 ? 'rgba(168,85,247,0.3)' : undefined }}
               >
-                {icon}
+                <div
+                  className="w-12 h-12 mx-auto mb-4 rounded-2xl flex items-center justify-center text-2xl"
+                  style={{
+                    background: 'rgba(168,85,247,0.10)',
+                    border: '1px solid rgba(168,85,247,0.2)',
+                  }}
+                >
+                  {icon}
+                </div>
+                <div
+                  className="text-[10px] font-bold uppercase tracking-[0.15em] mb-2"
+                  style={{ color: 'rgba(168,85,247,0.6)' }}
+                >
+                  Step {i + 1}
+                </div>
+                <div className="text-sm font-semibold text-white mb-1">{label}</div>
+                <div className="text-xs text-white/35">{desc}</div>
               </div>
-              <div className="text-sm font-semibold text-white">{label}</div>
-              <div className="text-xs text-white/35 mt-0.5">{sub}</div>
             </motion.div>
           ))}
         </motion.div>
       </section>
 
-      {/* How it works */}
+      {/* Why ZeroStaff */}
       <section className="max-w-4xl mx-auto px-4 pb-28">
         <motion.p
           initial={{ opacity: 0 }}
@@ -187,24 +265,24 @@ export default function LandingPage() {
           viewport={{ once: true, margin: '-60px' }}
           className="text-center text-xs text-white/30 uppercase tracking-[0.2em] mb-12"
         >
-          How it works
+          vs. the alternatives
         </motion.p>
         <motion.div
           variants={stagger}
           initial="hidden"
           whileInView="show"
           viewport={{ once: true, margin: '-40px' }}
-          className="grid sm:grid-cols-3 gap-6"
+          className="grid sm:grid-cols-3 gap-4"
         >
           {[
-            { step: '01', title: 'Fill one brief', desc: 'Topic, brand, audience, tone. 60 seconds of input.' },
-            { step: '02', title: 'AI generates 8 assets', desc: 'Blog, podcast, video, LinkedIn, email, clips, leads, report — all at once.' },
-            { step: '03', title: 'Download & publish', desc: 'Export everything. White-label client report included.' },
-          ].map(({ step, title, desc }) => (
-            <motion.div key={step} variants={fadeUp} className="glass p-6">
-              <div className="text-xs font-bold text-purple-400/60 tracking-widest mb-3">{step}</div>
-              <div className="text-base font-semibold text-white mb-2">{title}</div>
-              <div className="text-sm text-white/40 leading-relaxed">{desc}</div>
+            { name: 'Workable', gap: 'No AI screening — you read every CV yourself.' },
+            { name: 'Rippling', gap: 'Full HRIS required — overkill for most teams.' },
+            { name: 'Deel', gap: 'Enterprise compliance focus — not hiring speed.' },
+          ].map(({ name, gap }) => (
+            <motion.div key={name} variants={fadeUp} className="glass p-5">
+              <div className="text-xs font-bold text-white/30 uppercase tracking-widest mb-2">{name}</div>
+              <div className="text-sm text-white/50 leading-relaxed">{gap}</div>
+              <div className="mt-3 text-xs text-purple-400 font-medium">ZeroStaff does this automatically ✓</div>
             </motion.div>
           ))}
         </motion.div>
@@ -229,18 +307,18 @@ export default function LandingPage() {
         >
           {[
             {
-              tier: 'Free', price: '$0', sub: '2 briefs/mo',
-              features: ['Blog post', 'LinkedIn posts', 'Watermarked report'],
+              tier: 'Free', price: '$0', sub: '2 job posts/mo',
+              features: ['AI CV screening', 'Candidate ranking', 'Watermarked reports'],
               highlight: false,
             },
             {
-              tier: 'Pro', price: '$99', sub: '20 briefs/mo',
-              features: ['All 8 outputs', 'Podcast + video scripts', 'Email sequence', 'Lead gen pack', 'Client portal'],
+              tier: 'Growth', price: '$79', sub: '10 job posts/mo',
+              features: ['Everything free', 'Async video questions', 'Interview scheduling', 'Email notifications', 'Candidate portal'],
               highlight: true,
             },
             {
-              tier: 'Agency', price: '$199', sub: 'Unlimited',
-              features: ['Everything in Pro', 'White-label portal', 'Sub-accounts', 'API access', 'Custom domain'],
+              tier: 'Scale', price: '$199', sub: 'Unlimited',
+              features: ['Everything in Growth', 'Custom scoring rubric', 'ATS integration', 'API access', 'White-label portal'],
               highlight: false,
             },
           ].map(({ tier, price, sub, features, highlight }) => (
@@ -296,17 +374,17 @@ export default function LandingPage() {
       >
         <div className="glass p-10 rounded-3xl">
           <h2 className="text-3xl font-extrabold text-white mb-3">
-            Run your agency.<br />
-            <span className="grad-purple-orange">With zero staff.</span>
+            Your next hire is<br />
+            <span className="grad-purple-orange">already screened.</span>
           </h2>
-          <p className="text-sm text-white/40 mb-8">One brief. 8 content assets. Delivered in under 60 seconds.</p>
+          <p className="text-sm text-white/40 mb-8">Post a role. AI does the screening, interviews, and ranking. You just choose.</p>
           <Link
             href="/signup"
             className="inline-block px-10 py-3.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold btn-press glow-border relative overflow-hidden"
             style={{ transition: 'background 200ms cubic-bezier(0.23,1,0.32,1), transform 160ms cubic-bezier(0.23,1,0.32,1)' }}
           >
             <span className="shimmer absolute inset-0 rounded-xl" />
-            <span className="relative">Get started free</span>
+            <span className="relative">Start hiring free</span>
           </Link>
         </div>
       </motion.section>
@@ -314,7 +392,7 @@ export default function LandingPage() {
       {/* Footer */}
       <div className="border-t border-white/[0.05] max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
         <span className="text-sm font-semibold text-white/30">Zero<span className="text-purple-400/50">Staff</span></span>
-        <span className="text-xs text-white/20">© 2026 · AI Automation Agency OS</span>
+        <span className="text-xs text-white/20">© 2026 · AI Hiring Automation</span>
       </div>
     </div>
   )

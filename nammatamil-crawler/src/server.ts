@@ -92,6 +92,55 @@ app.get('/api/status', (_req, res) => {
   })
 })
 
+// ── Visitor counter ───────────────────────────────────────────────────
+const VISITOR_FILE = path.join(__dirname, '..', 'data', 'visitors.json')
+const ONLINE_WINDOW = 5 * 60 * 1000
+const SESSION_WINDOW = 30 * 60 * 1000 // 30min — new session = new unique visit
+
+// session_id → last seen timestamp (in-memory, resets on restart)
+const sessionMap = new Map<string, number>()
+
+function loadVisitors(): { total: number } {
+  try { return JSON.parse(fs.readFileSync(VISITOR_FILE, 'utf-8')) } catch { return { total: 0 } }
+}
+function saveVisitors(v: { total: number }) {
+  try { fs.writeFileSync(VISITOR_FILE, JSON.stringify(v)) } catch { /**/ }
+}
+function onlineNow(): number {
+  const cutoff = Date.now() - ONLINE_WINDOW
+  let count = 0
+  for (const ts of sessionMap.values()) { if (ts > cutoff) count++ }
+  return Math.max(1, count)
+}
+
+// POST /api/visitors/hit — session-deduped unique visit counter
+app.post('/api/visitors/hit', (req, res) => {
+  const sid: string | undefined = req.body?.session_id
+  const now = Date.now()
+  const v = loadVisitors()
+
+  if (sid) {
+    const last = sessionMap.get(sid)
+    // Count as new unique visit if: brand new session, or returning after 30min
+    if (!last || now - last > SESSION_WINDOW) {
+      v.total += 1
+      saveVisitors(v)
+    }
+    sessionMap.set(sid, now)
+  } else {
+    // No session_id — still count (legacy clients), update total
+    v.total += 1
+    saveVisitors(v)
+  }
+
+  res.json({ count: v.total, online: onlineNow() })
+})
+
+// Keep GET for backward compat (read-only, no increment)
+app.get('/api/visitors', (_req, res) => {
+  res.json({ count: loadVisitors().total, online: onlineNow() })
+})
+
 // ── POST /api/crawl — manually trigger a crawl run ───────────────────
 // Protected by a simple secret header
 app.post('/api/crawl', async (req, res) => {

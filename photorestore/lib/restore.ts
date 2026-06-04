@@ -15,7 +15,7 @@ const HF_TIMEOUT = 55_000
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function bufferToBlob(buffer: Buffer, mimeType: string): Blob {
-  return new Blob([buffer], { type: mimeType })
+  return new Blob([buffer.buffer as ArrayBuffer], { type: mimeType })
 }
 
 async function urlToBuffer(url: string): Promise<Buffer> {

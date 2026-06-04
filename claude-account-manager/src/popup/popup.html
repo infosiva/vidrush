@@ -7,81 +7,256 @@
   <link rel="stylesheet" href="popup.css" />
 </head>
 <body>
-  <div id="app">
-    <!-- Header -->
-    <header>
-      <div class="logo">
-        <span class="logo-dot"></span>
-        <span class="logo-text">Claude<strong>AM</strong></span>
-      </div>
-      <div class="header-actions">
-        <button id="btn-settings" class="icon-btn" title="Settings">⚙️</button>
-        <button id="btn-refresh" class="icon-btn" title="Refresh">🔄</button>
-      </div>
-    </header>
+<div id="app">
 
-    <!-- Tab bar -->
-    <nav class="tabs">
-      <button class="tab active" data-tab="accounts">Accounts</button>
-      <button class="tab" data-tab="activity">Activity</button>
-      <button class="tab" data-tab="tips">Tips</button>
-    </nav>
-
-    <!-- Tab: Accounts -->
-    <div id="tab-accounts" class="tab-content active">
-      <div id="accounts-list"></div>
-
-      <div class="section-header">
-        <span>Smart recommendation</span>
-      </div>
-      <div id="recommendation" class="recommendation"></div>
-
-      <button id="btn-add-account" class="add-btn">+ Add account</button>
+  <!-- Header -->
+  <header>
+    <div class="logo">
+      <svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="26" height="26" rx="8" fill="url(#hg)"/>
+        <circle cx="13" cy="12" r="3.2" fill="white" opacity="0.92"/>
+        <circle cx="13" cy="12" r="5.8" stroke="white" stroke-width="1.2" stroke-dasharray="3 2.2" opacity="0.3"/>
+        <defs>
+          <linearGradient id="hg" x1="0" y1="0" x2="26" y2="26" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#7c3aed"/>
+            <stop offset="100%" stop-color="#6366f1"/>
+          </linearGradient>
+        </defs>
+      </svg>
+      <span class="logo-text">Claude<strong>AM</strong></span>
+      <span id="header-mode-badge" class="mode-badge hidden"></span>
     </div>
-
-    <!-- Tab: Activity -->
-    <div id="tab-activity" class="tab-content">
-      <div class="section-header"><span>Recent conversations</span></div>
-      <div id="sessions-list" class="sessions-list"></div>
-
-      <div class="section-header" style="margin-top:12px"><span>7-day usage trend</span></div>
-      <div id="sparklines"></div>
+    <div class="header-actions">
+      <button id="btn-export" class="icon-btn" title="Export CSV">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v8M4 6l3 3 3-3M2 11h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button id="btn-refresh" class="icon-btn" title="Refresh">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M12 2.5A5.5 5.5 0 1 1 2 7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><path d="M12 2.5V5.5H9" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
     </div>
+  </header>
 
-    <!-- Tab: Tips -->
-    <div id="tab-tips" class="tab-content">
-      <div id="tips-content"></div>
+  <!-- Rotate reminder banner -->
+  <div id="rotate-banner" class="rotate-banner hidden">
+    <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="#f59e0b" stroke-width="1.2"/><path d="M6 4v3M6 8.5v.3" stroke="#f59e0b" stroke-width="1.2" stroke-linecap="round"/></svg>
+    <span id="rotate-banner-text"></span>
+  </div>
+
+  <!-- Tab bar -->
+  <nav class="tabs">
+    <button class="tab active" data-tab="accounts">Accounts</button>
+    <button class="tab" data-tab="apikeys">API Keys</button>
+    <button class="tab" data-tab="freemodels">Free</button>
+    <button class="tab" data-tab="activity">Activity</button>
+    <button class="tab" data-tab="tips">Tips</button>
+  </nav>
+
+  <!-- Tab: Accounts -->
+  <div id="tab-accounts" class="tab-content active">
+    <div id="accounts-list"></div>
+    <div class="section-header"><span>Smart recommendation</span></div>
+    <div id="recommendation" class="recommendation"></div>
+    <button id="btn-add-account" class="add-btn">+ Add account</button>
+  </div>
+
+  <!-- Tab: API Keys -->
+  <div id="tab-apikeys" class="tab-content">
+    <div class="section-header"><span>Your API keys</span></div>
+    <p style="font-size:11px;color:#4b5563;margin-bottom:10px;">Keys stored locally. Used by Claude Code + terminal tools. Never sent anywhere.</p>
+    <div id="apikeys-list" class="apikeys-list"></div>
+    <button id="btn-add-apikey" class="add-btn" style="margin-top:8px">+ Add key</button>
+  </div>
+
+  <!-- Tab: Free Models -->
+  <div id="tab-freemodels" class="tab-content">
+    <div class="section-header"><span>Free model chain</span></div>
+    <p style="font-size:11px;color:#4b5563;margin-bottom:10px;">Burn free tokens first. Anthropic is last resort.</p>
+    <div class="free-chain">
+      <div class="chain-item chain-active">
+        <div class="chain-dot"></div>
+        <div class="chain-info">
+          <div class="chain-name">Groq <span class="chain-tag free">Free</span></div>
+          <div class="chain-desc">llama-3.3-70b-versatile — fastest free LLM</div>
+        </div>
+        <div class="chain-status" id="groq-status">—</div>
+      </div>
+      <div class="chain-item">
+        <div class="chain-dot"></div>
+        <div class="chain-info">
+          <div class="chain-name">Gemini <span class="chain-tag free">Free</span></div>
+          <div class="chain-desc">gemini-2.0-flash — Google, large context</div>
+        </div>
+        <div class="chain-status" id="gemini-status">—</div>
+      </div>
+      <div class="chain-item">
+        <div class="chain-dot"></div>
+        <div class="chain-info">
+          <div class="chain-name">Cerebras <span class="chain-tag free">Free</span></div>
+          <div class="chain-desc">llama-3.3-70b — ultra-fast inference</div>
+        </div>
+        <div class="chain-status" id="cerebras-status">—</div>
+      </div>
+      <div class="chain-item chain-paid">
+        <div class="chain-dot chain-dot-paid"></div>
+        <div class="chain-info">
+          <div class="chain-name">Anthropic <span class="chain-tag paid">Paid</span></div>
+          <div class="chain-desc">claude-sonnet-4 — fallback only</div>
+        </div>
+        <div class="chain-status" id="anthropic-status">—</div>
+      </div>
+    </div>
+    <div class="section-header" style="margin-top:14px"><span>Get free keys</span></div>
+    <div class="free-links">
+      <a href="https://console.groq.com" target="_blank" class="free-link">Groq Console ↗</a>
+      <a href="https://aistudio.google.com" target="_blank" class="free-link">Google AI Studio ↗</a>
+      <a href="https://cloud.cerebras.ai" target="_blank" class="free-link">Cerebras Cloud ↗</a>
     </div>
   </div>
 
-  <!-- Modal: Edit account -->
-  <div id="modal-overlay" class="hidden">
-    <div id="modal">
-      <h3 id="modal-title">Edit Account</h3>
-      <input type="hidden" id="edit-id" />
-      <label>Label <input id="edit-label" type="text" placeholder="e.g. Personal Pro" /></label>
-      <label>Email <input id="edit-email" type="email" placeholder="your@email.com" /></label>
-      <label>Plan
-        <select id="edit-plan">
-          <option value="free">Free</option>
-          <option value="pro">Pro ($20/mo)</option>
-          <option value="max5x">Max 5× ($100/mo)</option>
-          <option value="max20x">Max 20× ($200/mo)</option>
-        </select>
-      </label>
+  <!-- Tab: Activity -->
+  <div id="tab-activity" class="tab-content">
+    <div class="section-header"><span>Recent conversations</span></div>
+    <div id="sessions-list" class="sessions-list"></div>
+    <div class="section-header" style="margin-top:12px"><span>7-day usage trend</span></div>
+    <div id="sparklines"></div>
+  </div>
+
+  <!-- Tab: Tips -->
+  <div id="tab-tips" class="tab-content">
+    <div id="tips-content"></div>
+  </div>
+
+</div>
+
+<!-- Onboarding overlay -->
+<div id="onboarding" class="ob-overlay hidden">
+  <div class="ob-card">
+    <!-- Step 1 -->
+    <div id="ob-step1" class="ob-step">
+      <div class="ob-logo">
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none">
+          <rect width="40" height="40" rx="12" fill="url(#ob-g)"/>
+          <circle cx="20" cy="19" r="5" fill="white" opacity="0.9"/>
+          <circle cx="20" cy="19" r="9" stroke="white" stroke-width="1.5" stroke-dasharray="4 3" opacity="0.3"/>
+          <defs>
+            <linearGradient id="ob-g" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="#7c3aed"/>
+              <stop offset="100%" stop-color="#6366f1"/>
+            </linearGradient>
+          </defs>
+        </svg>
+      </div>
+      <h2 class="ob-title">Claude Account Manager</h2>
+      <p class="ob-sub">Never hit rate limits mid-task again.</p>
+      <div class="ob-features">
+        <div class="ob-feature ob-stagger-1">
+          <div class="ob-icon ob-icon-indigo">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="12" height="9" rx="2" stroke="currentColor" stroke-width="1.3"/><path d="M5 3V2a2 2 0 0 1 4 0v1" stroke="currentColor" stroke-width="1.3"/><circle cx="7" cy="7.5" r="1" fill="currentColor"/></svg>
+          </div>
+          <div>
+            <div class="ob-feat-title">Track all accounts</div>
+            <div class="ob-feat-desc">Usage bars, reset timers, rate-limit alerts</div>
+          </div>
+        </div>
+        <div class="ob-feature ob-stagger-2">
+          <div class="ob-icon ob-icon-violet">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1l1.6 3.3 3.6.5-2.6 2.5.6 3.6L7 9.3l-3.2 1.6.6-3.6L1.8 4.8l3.6-.5L7 1z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg>
+          </div>
+          <div>
+            <div class="ob-feat-title">Smart switching</div>
+            <div class="ob-feat-desc">Recommends freshest account automatically</div>
+          </div>
+        </div>
+        <div class="ob-feature ob-stagger-3">
+          <div class="ob-icon ob-icon-emerald">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </div>
+          <div>
+            <div class="ob-feat-title">Free model chain</div>
+            <div class="ob-feat-desc">Groq → Gemini → Cerebras → Anthropic</div>
+          </div>
+        </div>
+        <div class="ob-feature ob-stagger-4">
+          <div class="ob-icon ob-icon-amber">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M7 1v2M7 11v2M1 7h2M11 7h2M3 3l1.4 1.4M9.6 9.6 11 11M3 11l1.4-1.4M9.6 4.4 11 3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/><circle cx="7" cy="7" r="2.5" stroke="currentColor" stroke-width="1.3"/></svg>
+          </div>
+          <div>
+            <div class="ob-feat-title">Usage history</div>
+            <div class="ob-feat-desc">7-day sparklines + conversation log</div>
+          </div>
+        </div>
+      </div>
+      <button id="ob-next" class="ob-btn-primary">Get started →</button>
+    </div>
+
+    <!-- Step 2 -->
+    <div id="ob-step2" class="ob-step hidden">
+      <h2 class="ob-title" style="margin-bottom:6px">Add your first account</h2>
+      <p class="ob-sub" style="margin-bottom:14px">You can add more later from the Accounts tab.</p>
+      <div class="ob-form">
+        <label class="ob-label">Label
+          <input id="ob-label" type="text" placeholder="e.g. Personal Pro" class="ob-input" />
+        </label>
+        <label class="ob-label">Email (optional)
+          <input id="ob-email" type="email" placeholder="your@email.com" class="ob-input" />
+        </label>
+        <label class="ob-label">Plan</label>
+        <div class="plan-pills" id="ob-plan-pills">
+          <button type="button" class="plan-pill" data-plan="free">Free</button>
+          <button type="button" class="plan-pill active" data-plan="pro">Pro · $20</button>
+          <button type="button" class="plan-pill" data-plan="max5x">Max 5× · $100</button>
+          <button type="button" class="plan-pill" data-plan="max20x">Max 20× · $200</button>
+        </div>
+        <input type="hidden" id="ob-plan" value="pro" />
+        <label class="ob-label">Color
+          <input id="ob-color" type="color" value="#6366f1" class="ob-input ob-color-input" />
+        </label>
+      </div>
+      <div class="ob-actions">
+        <button id="ob-skip" class="ob-btn-secondary">Skip for now</button>
+        <button id="ob-save" class="ob-btn-primary">Save &amp; start</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Edit / Add account -->
+<div id="modal-overlay" class="hidden">
+  <div id="modal">
+    <h3 id="modal-title">Edit Account</h3>
+    <input type="hidden" id="edit-id" />
+    <label>Label <input id="edit-label" type="text" placeholder="e.g. Personal Pro" /></label>
+    <label>Email <input id="edit-email" type="email" placeholder="your@email.com" /></label>
+    <label>Plan</label>
+    <div class="plan-pills" id="plan-pills">
+      <button type="button" class="plan-pill" data-plan="free">Free</button>
+      <button type="button" class="plan-pill active" data-plan="pro">Pro · $20</button>
+      <button type="button" class="plan-pill" data-plan="max5x">Max 5× · $100</button>
+      <button type="button" class="plan-pill" data-plan="max20x">Max 20× · $200</button>
+    </div>
+    <input type="hidden" id="edit-plan" value="pro" />
+    <label>Color <input id="edit-color" type="color" value="#6366f1" /></label>
+
+    <div class="modal-advanced-toggle" id="modal-advanced-toggle">
+      <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1.2"/><path d="M4 6h4M6 4v4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+      Advanced settings
+      <span class="toggle-arrow">▸</span>
+    </div>
+    <div id="modal-advanced" class="modal-advanced hidden">
       <label>Billing day of month <input id="edit-billing-day" type="number" min="1" max="28" value="1" /></label>
-      <label>Color <input id="edit-color" type="color" value="#6366f1" /></label>
-      <label>Profile URL (claude.ai with this account's session)
+      <label>Profile URL
         <input id="edit-url" type="url" placeholder="https://claude.ai" />
       </label>
-      <div class="modal-actions">
-        <button id="btn-modal-cancel" class="btn-secondary">Cancel</button>
-        <button id="btn-modal-save" class="btn-primary">Save</button>
-        <button id="btn-modal-delete" class="btn-danger">Delete</button>
-      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button id="btn-modal-cancel" class="btn-secondary">Cancel</button>
+      <button id="btn-modal-save" class="btn-primary">Save</button>
+      <button id="btn-modal-delete" class="btn-danger">Delete</button>
     </div>
   </div>
+</div>
 
-  <script src="popup.js" type="module"></script>
+<script src="popup.js" type="module"></script>
 </body>
 </html>

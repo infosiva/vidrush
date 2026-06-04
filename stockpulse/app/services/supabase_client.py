@@ -109,7 +109,7 @@ def get_stock_cache(symbol: str) -> dict | None:
             .maybe_single()
             .execute()
         )
-        return result.data
+        return result.data if result is not None else None
     except Exception:
         logger.exception("Error fetching stock cache for %s", symbol)
         return None
