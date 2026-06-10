@@ -1,0 +1,3 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0a0614; color: #f8fafc; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
