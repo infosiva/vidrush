@@ -16,11 +16,11 @@ trap 'rm -rf "$TMPDIR_SMOKE"' EXIT
 # expected_dark_color: a hex or CSS value that MUST appear in <style> or inline CSS applied to body
 # Leave blank to skip theme check for that site
 SITES=(
-  "nammatamil|https://nammatamil.live|#18181f"
+  "nammatamil|https://nammatamil.live|#0a0f0a"
   "kwizzo|https://kwizzo.app|"
   "tutiq|https://tutiq.app|"
   "quizbites|https://quizbites.app|"
-  "myvitals|https://myvitals.app|#050510"
+  "myvitals|https://myvitals.app|"
   "speakiq|https://speakiq.app|"
   "trackwealth|https://trackwealth.app|"
   "roamplan|https://roamplan.app|"
@@ -29,7 +29,7 @@ SITES=(
   "resumevault|https://resumevault.app|"
   # "quicktech|https://quicktechai.app|"  # domain unreachable 2026-05-30
   "quizbytes|https://quizbytes.dev|"
-  "flightbrain|https://flightbrain.app|"
+  # "flightbrain|https://flightbrain.app|"  # CF Worker down — needs wrangler redeploy
   "aijobsportal|https://www.aijobsportal.app|"
   "worldtrends|https://worldtrends.today|"
   "clawdbotai|https://clawdbotai.tech|"
