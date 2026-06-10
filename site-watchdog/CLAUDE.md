@@ -71,7 +71,7 @@ and sends Telegram notifications with before/after screenshots.
 - Bot: sends success/failure/review-failed/no-changes notifications
 
 ## GitHub Credentials
-- Token: `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`
+- Token: set as `GITHUB_TOKEN` env var in VPS `.env` — never hardcode
 - User: `infosiva`
 - All repos cloned to `/root/agents/` on VPS
 
