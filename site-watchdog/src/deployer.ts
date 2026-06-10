@@ -2,7 +2,7 @@ import { execSync, spawnSync } from 'child_process';
 import path from 'path';
 import { SiteConfig, DeployResult } from './types.js';
 
-const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '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';
+const GITHUB_TOKEN = process.env.GITHUB_TOKEN || '';
 const GITHUB_USER  = process.env.GITHUB_USER  || 'infosiva';
 
 function run(cmd: string, cwd: string, timeout = 30000): { ok: boolean; out: string } {

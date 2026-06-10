@@ -9,6 +9,13 @@
 .env.local.example
 # never commit any .env file — including example templates with real-looking keys
 
+# OAuth credentials and tokens — NEVER commit
+**/client_secrets.json
+**/token_*.pickle
+**/credentials.json
+**/*.pickle
+**/service_account*.json
+
 # IDE / OS
 .DS_Store
 .vscode/
