@@ -45,7 +45,8 @@ Keep responses concise, creative, and focused on video content. Max 3 sentences 
     }
 
     return NextResponse.json({ text: "I'm having trouble connecting right now. Try again in a moment!" })
-  } catch {
+  } catch (err) {
+    console.error('[vidrush][chat]', err)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
   }
 }

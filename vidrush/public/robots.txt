@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://vidrush.app/sitemap.xml

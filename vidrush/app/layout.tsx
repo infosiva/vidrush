@@ -30,7 +30,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           description: 'AI-powered text-to-video generator using Kling AI and fal.ai',
         })}} />
       </head>
-      <body style={{ background: '#0a0614', color: '#f8fafc', margin: 0, fontFamily: 'system-ui, sans-serif' }}>
+      <body style={{ background: '#f5f3ff', color: '#0f172a', margin: 0, fontFamily: 'system-ui, sans-serif' }}>
         {children}
         <FloatingChatWrapper />
         <Script defer data-site="vidrush.app" src="http://31.97.56.148:3098/t.js" strategy="afterInteractive" />
