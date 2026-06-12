@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
 import FloatingChatWrapper from '@/components/FloatingChatWrapper'
+import { ThemeLoader } from '@/lib/theme-loader'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         })}} />
       </head>
       <body style={{ background: '#f5f3ff', color: '#0f172a', margin: 0, fontFamily: 'system-ui, sans-serif' }}>
+        <ThemeLoader />
         {children}
         <FloatingChatWrapper />
         <Script defer data-site="vidrush.app" src="http://31.97.56.148:3098/t.js" strategy="afterInteractive" />
