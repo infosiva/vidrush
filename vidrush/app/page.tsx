@@ -21,12 +21,6 @@ const FEATURES = [
   { icon: '📥', title: 'Free Download', desc: 'Download your MP4 instantly. No account or card required.' },
 ]
 
-const SOCIAL_PROOF = [
-  { text: 'Generated a product promo in under a minute. The AI enhancement made my rough idea into a proper cinematic brief.' },
-  { text: 'Used it for three social media clips this week. Each one was ready before I even finished my coffee.' },
-  { text: 'The drone-shot style prompt worked perfectly for my travel content. Saved me hours of filming.' },
-]
-
 export default function VidrushPage() {
   const [prompt, setPrompt] = useState('')
   const [enhanced, setEnhanced] = useState('')
@@ -380,26 +374,6 @@ export default function VidrushPage() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
-
-      {/* SOCIAL PROOF */}
-      <section style={{ maxWidth: 1160, margin: '0 auto', padding: '72px 24px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-          <h2 style={{ fontSize: 'clamp(22px,3.5vw,36px)', fontWeight: 900, letterSpacing: '-0.03em', color: '#0f172a' }}>What people are making</h2>
-          <p style={{ fontSize: 15, color: '#64748b', marginTop: 10 }}>Real videos from real prompts — no fabricated results.</p>
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
-          {SOCIAL_PROOF.map((q, i) => (
-            <div key={i} style={{
-              background: '#fff', border: '1px solid rgba(124,58,237,0.12)',
-              borderRadius: 14, padding: '24px 24px 20px',
-              boxShadow: '0 2px 12px rgba(124,58,237,0.05)',
-            }}>
-              <div style={{ fontSize: 24, color: '#a78bfa', marginBottom: 12, lineHeight: 1 }}>"</div>
-              <p style={{ fontSize: 14, color: '#374151', lineHeight: 1.7, fontStyle: 'italic' }}>{q.text}</p>
-            </div>
-          ))}
         </div>
       </section>
 
