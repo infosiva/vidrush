@@ -33,10 +33,33 @@ This skill is the single source of truth for ALL portfolio standards. It covers:
 - §21 Smart AI model selection (task-aware, dynamic, free-tier first)
 - §22 Feedback section (every project, DB-backed, no auth)
 - §T  Live demo on landing (product IS the demo, real output, zero auth for core action)
+- §U  All new Vercel projects → sivaprakasam account only (infosiva FROZEN)
 
 **Do NOT skip this skill.** Every rule above is enforced by it.
 
 ## HARD RULES — permanent, fire on every session, every project, every push
+
+### §U — ALL new Vercel projects go to sivaprakasam account (HARD RULE — NO EXCEPTIONS)
+
+**infosiva account (`team_2XHm064mWA86v38GDJ01Veli`) is FROZEN — no new projects ever.**
+**ALL new projects → sivaprakasam account (`team_o4yd8mPfnYYzbpPwlbdxNnWE`)**
+
+Before ANY `vercel link` or `vercel deploy` for a new project:
+```bash
+vswitch sivaprakasam   # MANDATORY first step
+vlink                  # links to sivaprakasam scope
+```
+
+Verify correct account before linking:
+```bash
+vercel whoami          # must show sivaprakasam, not infosiva
+cat .vercel/project.json | grep orgId  # must be team_o4yd8mPfnYYzbpPwlbdxNnWE
+```
+
+**If orgId is `team_2XHm064mWA86v38GDJ01Veli` (infosiva) in any new project = stop, relink to sivaprakasam.**
+
+Existing 29 infosiva projects stay there — do NOT migrate them. Only NEW projects enforce this rule.
+Auto-trigger: any `vercel link`, `vercel deploy --yes`, or new project scaffold → run `vswitch sivaprakasam` first.
 
 ### §A — Vercel build green before EVERY push (no exceptions)
 NEVER run `git push` without verifying the Vercel build will pass first.
