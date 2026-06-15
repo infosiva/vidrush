@@ -249,6 +249,44 @@ Add to Vercel env via `set-vercel-env.ts`. Never hardcode codes in source. Rotat
 - Any marketing push → rotate codes in PROMO_CODES env (no code deploy needed)
 - `§F` new project checklist now includes: `lib/promoCode.ts` + `hooks/usePromo.ts` + `app/api/promo/route.ts`
 
+### §S — Landing page identity: unique bg/accent/layout + sensible content + branded logo (MANDATORY — no exceptions)
+
+**Violation = redo the work.** This is the #1 recurring failure across the portfolio (multiple sites converged on white/`#f8fafc` bg with no accent var, or generic split-hero with no real product demo).
+
+#### 1. Background + accent — must be unique AND match category
+- Before touching any landing page, grep `globals.css` of 3 other portfolio projects for `--background` / `--accent` hex values.
+- Pick bg+accent that (a) no other project currently uses, AND (b) matches the category table in §2 of project-update-wave (fintech=navy+emerald, health=white+teal, productivity=white+blue, creative=light+violet, food/local=warm-white+orange, gaming=deep-navy+amber, education=sky+blue, travel=green-tint+green).
+- `--accent` (and `--accent-2` if used) MUST be defined in `globals.css` — never leave a project on raw Tailwind defaults (`slate`/`gray`/`blue-600` with no CSS var). No-accent-var = instant fail.
+- BANNED PERMANENTLY: `#0a0a0f`/`#0f0905`-style near-black bg + orange/amber/terracotta accent — this includes near-misses, not just exact hex matches.
+
+#### 2. Layout — must differ from the last 3 projects touched
+- Split `lg:grid-cols-2` hero is fine ONLY if the right panel demo type is different from the other projects using split layout.
+- If 2+ projects share the same component file-naming AND same layout AND similar bg — that's a collision, redesign the newer one.
+- Half-finished redesigns (mixed old+new bg classes in the same file, e.g. both `bg-white` and `bg-[#020c14]` in one hero) are NOT acceptable — finish or revert, never ship half-migrated.
+
+#### 3. Sensible landing content — no generic SaaS filler
+- Hero headline + subhead must reference the ACTUAL product/niche by name — never generic "Build faster with AI" boilerplate that could apply to any product.
+- Right panel demo must show the REAL product UI for THIS project (its actual cards/data/flow) — not a stock illustration or a demo copy-pasted from another project.
+- Stats row, steps row, social proof — must be product-specific and real (per §20 zero hardcoded data). Remove anything generic enough to paste into a competitor's site unchanged.
+
+#### 4. Branded logo — navbar AND header, every project
+- Every `NavBar.tsx` (or equivalent) MUST show a branded mark: emoji/icon + product name, with the product name's key word in the project's accent color (e.g. `Match<span style={{color:'var(--accent-2)'}}>ly</span>`).
+- Use `app/icon.svg` or `app/icon.tsx` for the favicon — branded, not default Next.js icon. (Tracked separately in the portfolio favicon wave — verify present, don't skip on new projects.)
+- Logo must be present and visible at both 375px and 1280px — check in the mandatory Playwright screenshot gate (§A/§L).
+- No project ships with just a text wordmark in default foreground color — accent-colored key letter/word is mandatory.
+
+#### 5. Clarity + no forced login — visitor must "get it" and try it instantly
+- Hero H1 must say what/who/next in under ~8 words — visitor understands what the tool does and who it's for within 5-10 seconds, no scroll.
+- One primary CTA above the fold. Never 3+ competing CTAs on the same screen.
+- Core feature must work with ZERO auth — visitor completes one full real action (the actual thing the tool does) before any login prompt. Gate only save/export/history (per §16) — never gate the "try it" action itself.
+- Max 1 scroll to see: headline, live demo, CTA, "how it works" steps. If a new visitor can't grasp + try the product within one viewport scroll, redesign.
+- Trust signals (stats/quotes/logos) must be real or removed — never placeholder "1000+ users" / fake ratings / fake company logos (ties to §20, called out here because hero is the highest-visibility violation spot).
+
+#### Auto-trigger
+- Any landing page (`app/page.tsx`) touch → run all 5 checks above before commit.
+- Any new project scaffold → bg/accent/layout/demo-panel decided via the differentiation check BEFORE `/design-shotgun`, not after.
+- Portfolio audit (ongoing) tracks collisions found — see `PORTFOLIO-QUALITY-WAVE.md`.
+
 ## Quality-lift wave (next-week target) — see `PORTFOLIO-QUALITY-WAVE.md`
 Per-project brief template, TaskFlow board spec, and review-agent spec for the
 visuals/differentiation/no-hardcode/chatbot/feedback initiative. Plan-only —
