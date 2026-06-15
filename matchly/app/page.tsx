@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import LiveScorecardDemo from '@/components/LiveScorecardDemo'
 import { Sport } from '@/lib/types'
+import PromoWidget from '@/components/PromoWidget'
 
 const SPORTS: { id: Sport; label: string; emoji: string }[] = [
   { id: 'cricket', label: 'Cricket', emoji: '🏏' },
@@ -55,6 +56,8 @@ export default function Home() {
             <Link href="/create" className="btn-primary">Create a tournament — free</Link>
             <Link href="/demo" className="btn-secondary">See a live example</Link>
           </div>
+
+          <PromoWidget />
 
           {/* Stats row */}
           <div className="flex flex-wrap gap-6 mt-2 text-sm">
