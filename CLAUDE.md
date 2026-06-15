@@ -26,8 +26,233 @@ This skill is the single source of truth for ALL portfolio standards. It covers:
 - §14 Security (.env never in git, rate limiting on every AI endpoint)
 - §15 AI model cascade (Ollama → Groq → Gemini → Cerebras → Together → OpenRouter → Mistral → NVidia NIM → Kimi → DeepSeek → OpenAI → Anthropic)
 - §16 Auth scope (gate actions not browsing, NextAuth v5, freemium pattern)
+- §17 Tool iteration limits (prevent runaway agents)
+- §18 Rich media embedding (image/video/animated demo on every page)
+- §19 Project scope differentiation (research-driven niche depth, not generic templates)
+- §20 Zero hardcoded data (no fake stats/testimonials/lists anywhere)
+- §21 Smart AI model selection (task-aware, dynamic, free-tier first)
+- §22 Feedback section (every project, DB-backed, no auth)
 
 **Do NOT skip this skill.** Every rule above is enforced by it.
+
+## HARD RULES — permanent, fire on every session, every project, every push
+
+### §A — Vercel build green before EVERY push (no exceptions)
+NEVER run `git push` without verifying the Vercel build will pass first.
+Local build check is MANDATORY:
+```bash
+npm run build   # must exit 0 with zero TypeScript errors
+```
+Then Playwright smoke:
+```bash
+npx playwright screenshot --browser chromium --viewport-size 1280,800 http://localhost:PORT /tmp/PROJECT-desktop.png
+npx playwright screenshot --browser chromium --viewport-size 375,812 http://localhost:PORT /tmp/PROJECT-mobile.png
+```
+Read both screenshots. If any layout broken, fix before push.
+Agents that push without build check = incomplete work. Main session must verify Vercel deployment green after push.
+
+### §B — Hub dashboard must reflect every project update
+After ANY project change (redesign, new page, SEO fix, deploy, feature add):
+- Update `hub` project at `/Users/sivaprakasam/projects/agents/hub/`
+- Hub tracks: project name, URL, status (live/wip/needs-work), last_updated, health items
+- Hub pulls from Edge Config `ecfg_s5cumfsw58v5mpe9ahpkb7axmigs` — projects registered there
+- Hub must be CUSTOMISABLE without code redeploy — all project metadata in Edge Config
+- After any wave of changes: run hub sync to update all statuses
+- Command: `vercel env pull && npx ts-node hub/scripts/sync-projects.ts` (or equivalent)
+
+### §C — Auto-reschedule on quota limit
+If Claude Code hits rate/quota limit mid-session:
+1. Write current state to HANDOFF.md ("Resume from here if interrupted")
+2. Use `/schedule` to set wakeup: "resume HANDOFF.md portfolio wave"
+3. Wakeup fires automatically — user does not need to re-trigger
+This rule means long waves (10+ projects) never silently stall.
+
+### §D — AdSense meta tag in ALL projects (every layout.tsx)
+Every `app/layout.tsx` must have inside `<head>`:
+```html
+<meta name="google-adsense-account" content="ca-pub-XXXXXXXXXXXXXXXX" />
+```
+Publisher ID placeholder until AdSense account approved. Wire real ID once approved.
+Auto-trigger: any layout.tsx edit → check AdSense tag present. Missing = add it.
+
+### §E — Testing pipeline before push (full sequence)
+1. `npm run build` — zero errors
+2. `npm run dev &` — start server
+3. Playwright screenshots 375px + 1280px — read and verify visually
+4. Check: no horizontal overflow mobile, hero visible above fold, CTA clickable, chatbot FAB visible
+5. `git push` only after all 4 pass
+6. After push: `vercel ls` or check Vercel dashboard — deployment must go green
+7. If Vercel build fails: fix immediately, do NOT leave broken deploy
+
+### §F — Every new project scaffold (mandatory checklist)
+When creating ANY new project, these files must exist before first deploy:
+```
+app/layout.tsx        ← metadataBase, keyword title, OG png, JSON-LD, AdSense meta
+app/sitemap.ts        ← all static routes listed
+app/privacy/page.tsx  ← required for AdSense + GDPR
+public/robots.txt     ← Allow: /, Sitemap: https://DOMAIN/sitemap.xml
+public/og.png         ← 1200×630 (generate with sharp/SVG)
+app/api/feedback/route.ts  ← §22 feedback endpoint
+```
+No project goes live without all 6. Verify with: `ls app/sitemap.ts app/privacy public/og.png public/robots.txt`
+
+### §G — No push to main without PR review for shared infrastructure
+Files that affect ALL projects (hub, shared-ui, ai-platform-template, set-vercel-env.ts, vswitch.sh):
+NEVER push directly to main. Create a branch + PR, verify Vercel preview deploy works, then merge.
+Single project files: direct push to main is fine after build passes.
+
+### §H — Rate limiting on EVERY AI endpoint (no exceptions)
+Every `app/api/` route that calls an LLM must have rate limiting:
+```typescript
+const { ok } = checkRateLimit(ip, 10)  // max 10 req/hr
+if (!ok) return new Response('Rate limit', { status: 429 })
+```
+No AI endpoint ships without this. Unprotected endpoints = instant quota burn + potential abuse.
+
+### §I — Environment variables: never hardcode, always validate at startup
+Every project must fail LOUDLY (not silently) if required env vars are missing:
+```typescript
+if (!process.env.GROQ_API_KEY) console.warn('[ai] GROQ_API_KEY missing — AI features disabled')
+```
+Use optional chaining in cascade — missing key = skip provider, not crash.
+NEVER: `const key = process.env.KEY || 'hardcoded-fallback'`
+
+### §J — Chatbot scope enforcement (every project chatbot)
+Every project chatbot MUST end its system prompt with:
+```
+If asked anything outside [TOPIC], respond: "I'm trained for [SITENAME]. For that, try Google or ChatGPT!"
+```
+Unconstrained chatbot = off-brand responses + prompt injection risk.
+
+### §K — Performance: no unused AI providers in production
+Remove any provider from cascade that has no API key set in Vercel env.
+Dead providers add latency (timeout per provider = wasted seconds for users).
+After setting env vars: test cascade with `curl /api/health` and verify which provider responds.
+
+### §L — Responsive: every page must work at 375px with zero horizontal scroll
+Before every push: `npx playwright screenshot --viewport-size 375,812` and visually verify.
+Horizontal overflow on mobile = instant CRO killer. Fix before push, not after.
+
+### §M — All internal links must resolve (no dead nav/footer links)
+Before push, grep every `href="/..."` in layout/page/footer against actual routes in `app/`.
+A footer/nav link to a page that doesn't exist = 404 on click = instant trust loss.
+If a planned page isn't built yet, either build a minimal stub or remove the link — never ship a dead link.
+
+### §N — Custom 404 page in every project
+`app/not-found.tsx` must exist, branded (same nav/footer, on-brand copy), with a link back to `/`.
+Default Next.js 404 = unstyled, looks broken, kills AdSense trust signal.
+
+### §O — package-lock.json always committed alongside package.json
+Every dependency add (`npm install`) must commit both `package.json` AND `package-lock.json` together.
+Mismatched/missing lockfile = non-reproducible Vercel builds, "works locally, fails on Vercel" class of bugs.
+This was the root cause of multiple build failures this session (rideflow, mandirates, kwizzo).
+
+### §P — "Build green" must be independently re-verified by main session, never trusted from agent self-report
+A subagent saying "build passed" is not sufficient. Main session must run `npm run build` itself
+(or read the agent's actual build log output) before marking a project step `[x]` in HANDOFF.md.
+Agent self-reports can be wrong, stale, or run against uncommitted state — verify against the committed tree.
+
+### §Q — Background agents: assume failure on session restart, always re-check
+If Claude Code restarts/compacts mid-wave, background agents tracked in HANDOFF.md may report
+"failed" even if they made real file changes before dying. On resume: run `git status`/`git diff`
+on their target files FIRST to recover any uncommitted work before re-dispatching — don't redo
+work that's already on disk, and don't lose work that's on disk but uncommitted.
+
+### §R — Promo code / trial discount system (MANDATORY — add to every project)
+
+**Every project must ship a promo code system for marketing trials + discounted access.**
+This is the primary acquisition lever — a code unlocks Pro/extended free tier without payment.
+
+#### What to build (same pattern everywhere, copy from `lib/promoCode.ts` canonical)
+
+```typescript
+// lib/promoCode.ts (copy into every project)
+// Promo codes unlock Pro features for N days without payment
+// Codes live in PROMO_CODES env var (JSON array) or Edge Config — NEVER hardcoded in source
+// Format: [{ "code": "LAUNCH50", "daysUnlocked": 30, "feature": "pro" }]
+
+export type PromoEntry = { code: string; daysUnlocked: number; feature: string }
+
+export function getPromoCodes(): PromoEntry[] {
+  try {
+    return JSON.parse(process.env.PROMO_CODES ?? '[]')
+  } catch { return [] }
+}
+
+export function validatePromoCode(input: string): PromoEntry | null {
+  const codes = getPromoCodes()
+  return codes.find(c => c.code.toLowerCase() === input.trim().toLowerCase()) ?? null
+}
+```
+
+#### API route (every project: `app/api/promo/route.ts`)
+```typescript
+import { validatePromoCode } from '@/lib/promoCode'
+import { NextRequest, NextResponse } from 'next/server'
+
+export async function POST(req: NextRequest) {
+  const { code } = await req.json()
+  if (!code) return NextResponse.json({ valid: false }, { status: 400 })
+  const entry = validatePromoCode(code)
+  if (!entry) return NextResponse.json({ valid: false, message: 'Invalid code' })
+  // Store in cookie (no auth required)
+  const res = NextResponse.json({ valid: true, daysUnlocked: entry.daysUnlocked, feature: entry.feature })
+  res.cookies.set('promo_unlocked', JSON.stringify({ ...entry, activatedAt: Date.now() }), {
+    maxAge: entry.daysUnlocked * 86400, httpOnly: false, sameSite: 'lax', path: '/',
+  })
+  return res
+}
+```
+
+#### Client hook (`hooks/usePromo.ts`)
+```typescript
+'use client'
+import { useState, useEffect } from 'react'
+export function usePromo() {
+  const [isUnlocked, setIsUnlocked] = useState(false)
+  const [daysLeft, setDaysLeft] = useState(0)
+  useEffect(() => {
+    try {
+      const raw = document.cookie.split(';').find(c => c.trim().startsWith('promo_unlocked='))
+      if (!raw) return
+      const data = JSON.parse(decodeURIComponent(raw.split('=')[1]))
+      const elapsed = (Date.now() - data.activatedAt) / 86400000
+      const remaining = data.daysUnlocked - elapsed
+      if (remaining > 0) { setIsUnlocked(true); setDaysLeft(Math.ceil(remaining)) }
+    } catch { /* ignore */ }
+  }, [])
+  return { isUnlocked, daysLeft }
+}
+```
+
+#### UI placement (every project)
+- **Landing page**: small "Have a promo code?" link under the primary CTA button
+- **Gate/paywall modal**: "Enter promo code" input at bottom — unlocks instantly without page reload
+- **Unlocked state**: show green banner "🎉 Pro access active — X days remaining" in nav or hero
+- Use `usePromo()` hook to check gate — if `isUnlocked`, skip paywall and render Pro features directly
+
+#### Env var setup (every project)
+```
+PROMO_CODES=[{"code":"LAUNCH50","daysUnlocked":30,"feature":"pro"},{"code":"BETA100","daysUnlocked":90,"feature":"pro"}]
+```
+Add to Vercel env via `set-vercel-env.ts`. Never hardcode codes in source. Rotate codes per campaign.
+
+#### Marketing use cases
+- Launch codes: `LAUNCH50` → 30 days free Pro (tweet/email campaign)
+- Partner codes: `PARTNERNAME` → 60 days (affiliate/collab)
+- Event codes: `CRICKET2026` → 14 days (tournament organizer community)
+- Referral codes: unique per referrer, generate dynamically from PROMO_CODES env array
+
+#### Auto-trigger rules
+- Any new project scaffold → add `lib/promoCode.ts` + `app/api/promo/route.ts` + `hooks/usePromo.ts`
+- Any paywall/gate implementation → wire `usePromo()` before building payment flow
+- Any marketing push → rotate codes in PROMO_CODES env (no code deploy needed)
+- `§F` new project checklist now includes: `lib/promoCode.ts` + `hooks/usePromo.ts` + `app/api/promo/route.ts`
+
+## Quality-lift wave (next-week target) — see `PORTFOLIO-QUALITY-WAVE.md`
+Per-project brief template, TaskFlow board spec, and review-agent spec for the
+visuals/differentiation/no-hardcode/chatbot/feedback initiative. Plan-only —
+execution not yet dispatched.
 
 ## Projects in this directory
 
