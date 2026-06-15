@@ -32,6 +32,7 @@ This skill is the single source of truth for ALL portfolio standards. It covers:
 - §20 Zero hardcoded data (no fake stats/testimonials/lists anywhere)
 - §21 Smart AI model selection (task-aware, dynamic, free-tier first)
 - §22 Feedback section (every project, DB-backed, no auth)
+- §T  Live demo on landing (product IS the demo, real output, zero auth for core action)
 
 **Do NOT skip this skill.** Every rule above is enforced by it.
 
@@ -286,6 +287,61 @@ Add to Vercel env via `set-vercel-env.ts`. Never hardcode codes in source. Rotat
 - Any landing page (`app/page.tsx`) touch → run all 5 checks above before commit.
 - Any new project scaffold → bg/accent/layout/demo-panel decided via the differentiation check BEFORE `/design-shotgun`, not after.
 - Portfolio audit (ongoing) tracks collisions found — see `PORTFOLIO-QUALITY-WAVE.md`.
+
+### §T — Landing page: product IS the demo, zero auth for core action (HARD RULE)
+
+**Violation = redo the work.** A landing page that shows a screenshot instead of running the product, or gates the first action behind a login, is broken by definition.
+
+#### 1. The product activates on the landing page — no redirect, no signup wall
+- The core tool action must execute ON `app/page.tsx` — not behind `/app`, `/dashboard`, or a login wall.
+- Visitor's first action = product action. Not "watch a video", not "sign up to try".
+- Pattern: **inline hero input → inline result, same page, no modal, no new tab**.
+- If the tool requires async work (AI generation), show a loading state inline — result appears below input, not on a new route.
+
+#### 2. Demo output must be real — never hardcoded fake responses
+Four acceptable approaches (pick one per project):
+1. **Pre-seeded real examples** — 3-5 real inputs+outputs the tool actually produced, rotate via typewriter animation.
+2. **Live API call on load** — tool runs a fixed seed query on mount, displays real result. Visitor sees fresh output every visit.
+3. **User-submitted gallery** — real outputs from real users shown in hero. Combined social proof + demo.
+4. **Interactive live call** — visitor types own input, hits generate, gets real API response. Highest trust.
+
+Never: hardcoded `const fakeResult = "Great job! Here's your plan..."` in the hero. If caught in code review = instant revert.
+
+#### 3. Above-the-fold constraint — headline + demo + CTA in one viewport
+- At 768px height: **headline (≤8 words) + live demo area + one primary CTA** must all be visible without scroll.
+- If it doesn't fit: remove elements (trim stats row, collapse steps), never shrink font or increase scroll.
+- Layout patterns by category:
+
+| Category | Hero layout |
+|---|---|
+| Search/query tools | Full-width input bar center-screen |
+| AI generators / converters | Split: input left / live output right |
+| Canvas / editor tools | Full working canvas loads on page |
+| AI agents / automation | Terminal/typewriter showing real output |
+| Before/after tools | Card flip or side-by-side comparison |
+
+#### 4. Gate only: save, export, history, bulk — never gate the core action
+Per category, what is FREE (zero auth) vs GATED:
+
+| Category | Free (zero auth) | Gate only |
+|---|---|---|
+| AI text generators | Generate 1 full result | Download, save, history |
+| Quiz tools | Play full quiz, see score | Save score, leaderboard entry |
+| Booking tools | See slots, fill enquiry form | Calendar confirmation / invite |
+| Job portals | Search + view 10 listings | Apply / upload CV |
+| Invoice tools | Generate + view/print 1 invoice | Download PDF, send by email |
+| Travel planners | Generate full itinerary | Save, share, export |
+| AI screeners | Upload + get 1 full analysis | Bulk upload, export report |
+| Content tools | Generate 1 piece of content | Save to library, schedule |
+
+#### 5. Entertainment without scroll — what converts vs what's noise
+**Use:** Real rotating outputs (actual product results), live real usage counter (only if ≥500), typewriter showing real sample queries cycling, instant response to visitor's own input.
+**Remove:** Fake stat badges ("10k users"), star ratings with no source, autoplay demo videos, pure decorative animations with no content, press logos not earned.
+
+#### Auto-trigger
+- Any `app/page.tsx` touch → verify §T compliance: is core action runnable without auth? Is demo output real? Does it fit one viewport?
+- New project scaffold → decide "what is the free action" BEFORE writing any UI code. Document it in a comment at top of `app/page.tsx`.
+- If the free action requires an API key: use the AI cascade (Groq free tier first) — never block the demo because of missing paid key.
 
 ## Quality-lift wave (next-week target) — see `PORTFOLIO-QUALITY-WAVE.md`
 Per-project brief template, TaskFlow board spec, and review-agent spec for the
