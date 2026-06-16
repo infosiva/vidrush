@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
 import FloatingChatWrapper from '@/components/FloatingChatWrapper'
+import FeedbackWidget from '@/components/FeedbackWidget'
 import { ThemeLoader } from '@/lib/theme-loader'
 import './globals.css'
 
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ThemeLoader />
         {children}
         <FloatingChatWrapper />
+        <FeedbackWidget siteName="VidRush" accentColor="#7c3aed" accentColor2="#6d28d9" position="left" />
         <Script defer data-site="vidrush.app" src="http://31.97.56.148:3098/t.js" strategy="afterInteractive" />
       </body>
     </html>
