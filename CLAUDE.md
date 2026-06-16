@@ -1,5 +1,43 @@
 # agents/ — Project Standards
 
+## §0-VERCEL — WHICH PROJECT GOES WHERE (HARD RULE — NO EXCEPTIONS, PERMANENT)
+
+**This rule exists because 8 old projects were accidentally relinked to sivaprakasam, making them unreachable for weeks.**
+
+### Two accounts, two rules — memorise this:
+
+| Account | Vercel slug | orgId | Rule |
+|---|---|---|---|
+| `infosiva` | `infosivas-projects` | `team_2XHm064mWA86v38GDJ01Veli` | ALL existing/old projects — frozen list below |
+| `sivaprakasam` | `itsmesivaprakasam-6380s-projects` | `team_o4yd8mPfnYYzbpPwlbdxNnWE` | ALL new projects from 2026-05-01 onward |
+
+### infosiva projects (NEVER move, NEVER redeploy to sivaprakasam):
+`kwizzo` `tutiq` `quizbites` `speakiq` `trackwealth` `invoicemint` `roamplan` `flighttracker` `billslash` `resumevault` `aijobsportal` `draftcal` `aicoachlab` `ai-social-content` `agenttrace` `neuralos` `protoforge` `idea-agent` `aitoolkit` `pixelforge` `clipforge-ai` `yt-portal` `ai-resume-screener` `clawdbotai` `myvitals` `worldtrends` `mandirates` `bookingcall` `firstline`
+
+### MANDATORY before ANY `vercel link` or `vercel --prod`:
+```bash
+# 1. Check which account the project belongs to (lookup list above)
+# 2. For infosiva projects:
+vercel --prod --yes --scope infosivas-projects --token $VERCEL_TOKEN_INFOSIVA
+# 3. For sivaprakasam projects:
+vswitch sivaprakasam && vercel --prod --yes
+# 4. After deploy, verify .vercel/project.json has correct orgId:
+cat .vercel/project.json | grep orgId
+# infosiva old projects → team_2XHm064mWA86v38GDJ01Veli
+# sivaprakasam new projects → team_o4yd8mPfnYYzbpPwlbdxNnWE
+```
+
+### Auto-trigger: fires on EVERY deploy action
+- Before `vercel link` → check project name against infosiva list above
+- Before `vercel --prod` → verify `.vercel/project.json` orgId matches expected account
+- Wrong orgId found → STOP. Fix .vercel/project.json or relink before deploying.
+- **BEFORE touching any project: `curl -s -o /dev/null -w "%{http_code}" https://domain` — if 200, the site is LIVE. Do NOT redeploy, do NOT delete .vercel, do NOT make code changes unless the code itself is broken. A live site is not broken just because the account assignment is wrong in a config file.**
+- **NEVER `rm -rf .vercel` on a live project** — deleting + redeploying creates NEW project, detaches domains, breaks live sites immediately
+- To fix wrong orgId: ONLY edit `.vercel/project.json` in place — change `orgId` and `projectId` values, never delete the file
+- Wrong account found → fix the JSON, verify domain still attached via Vercel API, then redeploy. Never nuke and redo.
+
+---
+
 ## §0-PRE — PLAN BEFORE ANY ACTION (HARD RULE — NO EXCEPTIONS)
 
 **Before ANY fix, deploy, code change, or agent dispatch:**
@@ -646,3 +684,74 @@ cat .vercel/project.json | grep orgId
 7. If any P1-P10 fail → fix immediately, repeat from step 1
 
 This sequence is non-negotiable. "I'll check later" = violation.
+
+### §Z5 — Chatbot + Feedback MANDATORY on every project (HARD RULE — added 2026-06-16)
+
+**Every project must have both before any code push. No exceptions.**
+
+#### Chatbot requirements
+- `FloatingChatWrapper` (or equivalent) imported in `app/layout.tsx` — fixed bottom-right FAB
+- `app/api/chatbot/route.ts` (or `app/api/chat/route.ts`) — Groq llama-3.3-70b primary, llama-3.1-8b-instant fallback
+- System prompt scoped to product: ends with "If asked anything outside [TOPIC], respond: 'I'm trained for [SITENAME]. For that, try Google or ChatGPT!'"
+- Rate limit: 60 req/hr per IP (chatbot is conversational — NOT 10 req/hr)
+- Multi-tier fallback: Groq → Gemini → Cerebras → graceful error message (NEVER 500)
+- Free tier: unlimited chatbot, no auth gate, no token paywall
+
+#### Feedback requirements
+- `app/api/feedback/route.ts` — accepts `{type, rating, message, email?, page?, site?}`
+- Logs to console + Telegram if `TELEGRAM_BOT_TOKEN` + `TELEGRAM_CHAT_ID` set
+- `FeedbackWidget` component imported in `app/layout.tsx`
+- No auth required — any visitor can submit
+
+#### Auto-trigger
+- Any `app/layout.tsx` edit → verify both `FloatingChatWrapper` and `FeedbackWidget` present
+- Any new project scaffold → add chatbot + feedback BEFORE first deploy
+- `§F` scaffold checklist now includes: `app/api/chatbot/route.ts` + `app/api/feedback/route.ts` + both components in layout
+
+### §Z6 — Design System Tools MANDATORY — no raw Tailwind from scratch (HARD RULE — added 2026-06-16)
+
+**Every UI change must use the design system pipeline. Violation = redo the work.**
+
+#### Pipeline (fires on every project touch — no exceptions)
+1. `/design-shotgun` — 3 directions, pick furthest from existing portfolio
+2. `/design-html` — Claude canvas generates production HTML + Tailwind
+3. `/ui-ux-pro-max` — premium quality pass (layout, spacing, hierarchy)
+4. `/21st-registry` — pull polished components before hand-rolling (buttons, cards, forms, pricing)
+5. `/emil-design-eng` — polish pass (spacing, micro-interactions, taste)
+6. `/animate` — Framer Motion, spring physics, easing
+7. `/fixing-accessibility` + `/fixing-metadata` — audit
+
+Steps 3-4 MANDATORY on every new project or landing page touch.
+
+#### Hard bans (permanent — violation = revert)
+- NEVER write raw `className="..."` from scratch for layout/hero sections
+- NEVER two portfolio projects with same bg hex + accent hex
+- BANNED bg combos: `#0a0a0f`/near-black + orange/amber; purple as page background (`#7c3aed`, `#8b5cf6`, `fdf4ff`, `faf5ff`)
+- BANNED patterns: `radial-gradient(ellipse...rgba(20,184,166` teal mesh blobs; dot-grid `radial-gradient(rgba(255,255,255,0.038) 1px` overlays
+- Static right panel = incomplete. Animated live product demo mandatory.
+
+#### Category → theme (canonical, never deviate)
+| Category | Bg | Accent |
+|---|---|---|
+| Productivity/SaaS | `#ffffff` white | `#2563eb` blue |
+| Education/quiz | `#f0f9ff` sky-tint | `#0284c7` sky-blue |
+| Health/wellness | `#f8fafc` white | `#0d9488` teal |
+| Finance/billing | `#f8fafc` white | `#059669` emerald |
+| Travel/local | `#f0fdf4` green-tint | `#059669` emerald |
+| Food/cultural | `#fffbf5` warm-white | `#ea580c` orange |
+| News/trends | `#f9fafb` white | `#dc2626` red |
+| Dev tools/agents | `#0b1120` dark navy | `#6366f1` indigo |
+| AI infra/resume | `#0c0f1a` dark | `#7c3aed` violet |
+| Gaming/creative | `#0f0f23` deep navy | `#f59e0b` amber |
+| Media/video | `#0a0a0f` near-black | `#e879f9` fuchsia |
+
+Auto-trigger: any `app/page.tsx` or `app/layout.tsx` touch → verify bg+accent matches category, not reused across portfolio.
+
+### §Z7 — Hub Dashboard URL (HARD RULE — added 2026-06-16)
+
+Hub production URL: **`https://ai-products-hub.vercel.app`**
+
+- All internal links, memory files, HANDOFF.md references → use this URL
+- Hub controls chatbot model, rate limits, feature flags, promo codes for ALL 40 projects via Edge Config `ecfg_s5cumfsw58v5mpe9ahpkb7axmiges`
+- After any portfolio-wide change → update hub project metadata in Edge Config
+- Hub redesign needed (tracked in TaskFlow) — current layout cluttered
