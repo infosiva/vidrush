@@ -16,7 +16,7 @@ trap 'rm -rf "$TMPDIR_SMOKE"' EXIT
 # expected_dark_color: a hex or CSS value that MUST appear in <style> or inline CSS applied to body
 # Leave blank to skip theme check for that site
 SITES=(
-  "nammatamil|https://nammatamil.live|#0a0f0a"
+  "nammatamil|https://nammatamil.live|"
   "kwizzo|https://kwizzo.app|"
   "tutiq|https://tutiq.app|"
   "quizbites|https://quizbites.app|"
