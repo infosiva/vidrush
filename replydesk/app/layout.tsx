@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Script from "next/script";
 import FloatingChatWrapper from "@/components/FloatingChatWrapper"
+import FeedbackWidget from "@/components/FeedbackWidget"
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -48,6 +49,7 @@ export default function RootLayout({
       <body className={`${inter.className} bg-gray-950 text-gray-100 min-h-full`}>
         {children}
         <FloatingChatWrapper />
+        <FeedbackWidget siteName="ReplyDesk" accentColor="#6366f1" accentColor2="#4f46e5" position="left" />
         <Script defer data-site="switchboard-ai.vercel.app" src="http://31.97.56.148:3098/t.js" strategy="afterInteractive" />
       </body>
     </html>
