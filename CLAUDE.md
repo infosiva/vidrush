@@ -37,6 +37,43 @@ This skill is the single source of truth for ALL portfolio standards. It covers:
 
 **Do NOT skip this skill.** Every rule above is enforced by it.
 
+## §V — DESIGN STANDARD: Mixed Theme by Category (HARD RULE — enforced 2026-06-15)
+
+**Full spec: `DESIGN-STANDARD.md` in repo root. Read it before any UI work.**
+
+### What's permanently banned (every project, every touch)
+- `radial-gradient(ellipse...rgba(20,184,166` teal mesh blobs — DEAD PATTERN
+- `#0a0a0f` / `#0a0a0b` / `#080712` dark bg for consumer apps
+- Dot-grid `radial-gradient(rgba(255,255,255,0.038) 1px` overlays on dark bg
+- Any two portfolio projects sharing same bg hex + accent hex
+- Orange/amber + near-black combo
+
+### Consumer / lifestyle → LIGHT theme
+White or tinted bg (`#f8fafc`, `#f0f9ff`, `#fffbf5`), dark text (`#0f172a`), category accent.
+No gradient blobs. Clean borders (`#e2e8f0`).
+
+### Dev tools / AI infra → DARK theme (flat, no blobs)
+Flat dark navy (`#0b1120`, `#0c0f1a`, `#0f0f23`). No radial blobs. No dot grid.
+
+### Category → accent (quick ref)
+| Category | Bg | Accent |
+|---|---|---|
+| Education/quiz | `#f0f9ff` sky-tint | `#0284c7` sky-blue |
+| Health/wellness | `#f8fafc` white | `#0d9488` teal |
+| Travel/local | `#f0fdf4` green-tint | `#059669` emerald |
+| Finance/billing | `#f8fafc` white | `#059669` emerald |
+| Productivity/SaaS | `#ffffff` white | `#2563eb` blue |
+| Food/cultural | `#fffbf5` warm-white | `#ea580c` orange |
+| News/trends | `#f9fafb` white | `#dc2626` red |
+| Dev tools/agents | `#0b1120` dark navy | `#6366f1` indigo |
+| AI infra/resume | `#0c0f1a` dark | `#7c3aed` violet |
+| Gaming/creative | `#0f0f23` deep navy | `#f59e0b` amber |
+| Media/video | `#0a0a0f` near-black | `#e879f9` fuchsia |
+
+**Per-project assignments: `DESIGN-STANDARD.md` has the full table (33 projects).**
+
+Auto-trigger: any landing page (`app/page.tsx`) touch OR new project → check DESIGN-STANDARD.md, verify bg+accent not reused.
+
 ## HARD RULES — permanent, fire on every session, every project, every push
 
 ### §U — ALL new Vercel projects go to sivaprakasam account (HARD RULE — NO EXCEPTIONS)
@@ -439,3 +476,145 @@ Document token FORMAT only (e.g. `gho_...36chars`), never actual values.
 git config user.email "info.siva@gmail.com"
 git config user.name "Siva"
 ```
+
+---
+
+## HARD RULES ADDED 2026-06-16 (permanent — fire every session, every project, no exceptions)
+
+### §W — Playwright Live-Site QA (MANDATORY, re-triggerable anytime)
+
+Every project must pass 10 browser checks against the live URL before any task is marked complete.
+
+**10 checks (P1-P10):**
+1. P1 — Landing loads, HTTP 200, H1 visible, no console errors
+2. P2 — All navbar links resolve (no 404)
+3. P3 — All footer links resolve (no 404)
+4. P4 — Core action runs zero auth — real output, not "Sign in to continue"
+5. P5 — Chatbot FAB visible, sends "hello", real response within 10s
+6. P6 — Feedback form submits, returns 200
+7. P7 — Mobile 375px: no horizontal scroll, hero above fold, CTA clickable
+8. P8 — Desktop 1280px: layout intact, demo panel visible
+9. P9 — Auth gate check: `/dashboard` or `/app` without login redirects (doesn't crash)
+10. P10 — Page load < 5s (no runaway JS bundle)
+
+**Every P1-P10 result logs to TaskFlow "Portfolio QA Audit" board via `qa-insert-task.mjs`.**
+
+**Trigger anytime:**
+```bash
+# From taskflow/ dir:
+node --env-file=.env.local scripts/run-playwright-qa.mjs --project kwizzo
+node --env-file=.env.local scripts/run-playwright-qa.mjs --all
+```
+
+This is a permanent protocol. Every site update → run it. Results appear in TaskFlow in real-time.
+
+### §X — Token Limits (mandatory in every project, every AI call)
+
+```typescript
+// lib/tokenLimit.ts — copy into every project
+const LIMITS = {
+  free: { maxInputTokens: 800, maxOutputTokens: 400 },
+  pro:  { maxInputTokens: 4000, maxOutputTokens: 2000 },
+}
+export function getTokenLimit(plan: 'free' | 'pro') { return LIMITS[plan] }
+```
+
+Rules:
+- Every LLM call passes `max_tokens` from getTokenLimit — never omit it
+- Chatbot: cap history at last 6 messages max
+- Free tier: trim user input to 800 tokens before sending
+- Checklist: `rate_limit` check also verifies `max_tokens` present in AI route
+
+### §Y — Chatbot Never Breaks (MANDATORY — never leave chatbot dead)
+
+**Chatbot must have a multi-tier fallback. Never one model, never one provider.**
+
+```typescript
+// Fallback order (copy into every chatbot route):
+// 1. Groq llama-3.3-70b (free, fast, primary)
+// 2. Groq llama-3.1-8b-instant (free, faster, fallback)
+// 3. Gemini 2.0-flash (free tier, backup)
+// 4. Cerebras llama3.1-70b (free tier, backup)
+// 5. Together.ai deepseek-r1 (cheap, last resort)
+// If ALL fail → return graceful error: "Chat is resting — try again in a moment."
+// NEVER return a 500 or blank screen to the user.
+```
+
+Model selection must be dynamic — read from Edge Config or env var, not hardcoded. Hub dashboard controls which model each project uses (see §Z).
+
+Free tier = unlimited chatbot usage. No auth gate on chatbot. No token-count paywall on chatbot.
+Rate limit chatbot at 60 req/hr per IP (not 10 — chatbot is conversational, needs headroom).
+
+### §Z — Hub Dashboard Controls Everything (MANDATORY, no code changes for config)
+
+**Hub (`https://ai-products-hub.vercel.app`) is the single control panel for ALL 49 projects.**
+
+What must be configurable from Hub without code deploy:
+- Chatbot model per project (stored in Edge Config `ecfg_s5cumfsw58v5mpe9ahpkb7axmiges`)
+- Rate limits per project (req/hr, max_tokens)
+- Feature flags per project (chatbot on/off, feedback on/off, promo active)
+- Promo codes per project (active/expired toggle)
+- Project status (live/maintenance/wip)
+- Health check last-run timestamp + result
+
+**Rule: NO project-specific config lives in code or env vars if Hub can own it.**
+If you're about to hardcode a limit or toggle in a project file → stop, put it in Edge Config instead.
+
+Hub dashboard redesign is required (current is too cluttered) — see open task in TaskFlow.
+
+### §Z2 — Drag-to-In-Progress Triggers Agent (TaskFlow automation)
+
+When a task in the "Portfolio QA Audit" board is dragged from "Needs Fix" → "In Progress":
+- TaskFlow fires a webhook to the agent endpoint
+- Agent reads task notes (exact failures + fix steps)
+- Agent executes fixes on the project (rate limit, feedback widget, chatbot, etc.)
+- Agent logs progress back to TaskFlow task as comments in real-time
+- On completion: agent moves task to "Passed" group automatically
+
+**Implementation needed:** `app/api/webhooks/board-move/route.ts` in taskflow + dispatcher agent.
+
+### §Z3 — No Purple Background (BANNED permanently, added 2026-06-16)
+
+Purple (`#7c3aed`, `#8b5cf6`, `#9333ea`, `#6d28d9`, `fdf4ff`, `faf5ff`) is BANNED as a background color.
+Purple accent on dark bg is fine. Purple AS the page background = banned.
+
+Affected projects needing fix:
+- `pdfideas` — bg=`#fdf4ff` (purple-tint) → change to `#f8fafc` white, keep `#9333ea` accent
+- `quizbytesdaily` — bg=`#faf5ff` (purple-tint) → change to `#f0f9ff` sky-tint, accent `#7c3aed` ok
+
+### §Z3b — Vercel Account Assignment (permanent — no exceptions, no grey area)
+
+**Which projects go where — hardcoded forever:**
+
+| Account | orgId | Rule |
+|---|---|---|
+| `infosiva` | `team_2XHm064mWA86v38GDJ01Veli` | FROZEN — existing 29 projects ONLY, never new |
+| `sivaprakasam` | `team_o4yd8mPfnYYzbpPwlbdxNnWE` | ALL new projects from 2026-05-01 onward |
+
+**infosiva projects (do NOT migrate, do NOT re-deploy to other account):**
+kwizzo, tutiq, quizbites, speakiq, trackwealth, invoicemint, roamplan, flighttracker, billslash, resumevault, aijobsportal, draftcal, aicoachlab, ai-social-content, agenttrace, neuralos, protoforge, idea-agent, aitoolkit, pixelforge, clipforge-ai, yt-portal, ai-resume-screener, clawdbotai, myvitals, worldtrends, mandirates, bookingcall, firstline (29 total)
+
+**sivaprakasam projects (new, all future):**
+zerostaff, outreach-crm, aicoachlab (new), hub, taskflow, pdfideas, quizbytesdaily, meetscribe, voicejournal, weekendai, parceliq, homecanvas, vidrush, campaignforge, rideflow, agencyos, anylocal, quicktech, replydesk, nammatamil, photorestore, ai-toolkit, ai-jobs-portal, billslash-v2, playsmart + all future projects
+
+**Before ANY vercel deploy:**
+```bash
+# Check which account the project is linked to:
+cat .vercel/project.json | grep orgId
+# infosiva = team_2XHm064mWA86v38GDJ01Veli → only ok for 29 listed
+# sivaprakasam = team_o4yd8mPfnYYzbpPwlbdxNnWE → all new
+# Wrong account = stop, relink with vlink
+```
+
+### §Z4 — Standard Protocol for Every Site Update (permanent)
+
+**No code change merges without running this sequence:**
+1. `npm run build` — exit 0, zero TS errors
+2. `npm run dev &` — start local
+3. Playwright screenshots 375px + 1280px — read both visually
+4. `git push` → wait for Vercel green
+5. `node --env-file=.env.local scripts/run-playwright-qa.mjs --project <name>` on live URL
+6. All P1-P10 pass → move TaskFlow task to "Passed"
+7. If any P1-P10 fail → fix immediately, repeat from step 1
+
+This sequence is non-negotiable. "I'll check later" = violation.
