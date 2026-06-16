@@ -1,6 +1,8 @@
 import type { Metadata } from 'next'
 import Script from 'next/script'
 import './globals.css'
+import ChatBot from '@/components/ChatBot'
+import FeedbackWidget from '@/components/FeedbackWidget'
 
 export const metadata: Metadata = {
   title: 'PhotoRestore — Restore Old Photos Free. No Account, No Subscription.',
@@ -32,6 +34,8 @@ export default function RootLayout({
       </head>
       <body className="relative">
         {children}
+        <ChatBot />
+        <FeedbackWidget siteName="PhotoRestore" accentColor="#7c3aed" accentColor2="#6d28d9" position="left" />
         <Script defer data-site="photorestore.app" src="http://31.97.56.148:3098/t.js" strategy="afterInteractive" />
       </body>
     </html>
