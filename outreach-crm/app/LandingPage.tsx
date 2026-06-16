@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import PromoWidget from '@/components/PromoWidget'
 import { motion } from 'framer-motion'
 
 const FEATURES = [
@@ -202,6 +203,7 @@ export default function LandingPage() {
             <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.2)', marginTop: 12 }}>
               No credit card required · Free for up to 50 emails/month
             </p>
+            <PromoWidget />
           </motion.div>
 
           {/* Right — demo panel */}

@@ -10,6 +10,7 @@
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.2",
     "@neondatabase/serverless": "^1.1.0",
+    "@vercel/edge-config": "^1.4.3",
     "csv-parse": "^6.2.1",
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
