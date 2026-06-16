@@ -1,5 +1,33 @@
 # agents/ — Project Standards
 
+## §0-PRE — PLAN BEFORE ANY ACTION (HARD RULE — NO EXCEPTIONS)
+
+**Before ANY fix, deploy, code change, or agent dispatch:**
+1. Show the plan — what will be done, per project, in order
+2. Wait for explicit user approval ("yes", "go", "proceed", "looks good")
+3. Only then execute
+
+**Never:**
+- Start fixing before showing plan
+- Ask "should I proceed?" mid-execution
+- Assume approval from context or prior conversation
+- Dispatch fix agents without a written plan visible to user first
+
+**Plan format (minimum):**
+```
+## Plan — [task name]
+### What we found: [findings summary]
+### What we'll fix, in order:
+1. [project] — [exact action] — [why]
+2. ...
+### What we won't touch: [scope boundary]
+### Risks: [anything irreversible or risky]
+```
+
+This rule fires EVERY time. No exceptions for "small" fixes, "obvious" changes, or "just adding" something.
+
+---
+
 ## MANDATORY: Load project-update-wave skill first
 
 **Before ANY work in this directory:**
