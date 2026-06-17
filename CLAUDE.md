@@ -764,8 +764,9 @@ This sequence is non-negotiable. "I'll check later" = violation.
 6. `/emil-design-eng` — polish pass (spacing, micro-interactions, taste)
 7. `/animate` — Framer Motion, spring physics, easing
 8. `/fixing-accessibility` + `/fixing-metadata` — audit
+9. **`/design-loop` (installed 2026-06-17, MANDATORY final pass)** — github.com/andrejkanuch/design-lenses. Orchestrates 8 specialist agents × 4 iterations (diagnose → fix → harden → polish) on the finished file. Run on every landing page / hero file before push: `/design-loop app/page.tsx --domain=<category>`. Domains: motorcycle, fitness, finance, ecommerce, medical, default. Use `--dry-run` first to preview, `--no-apply` for a report-only pass if you want to review before auto-edit. `/design-brainstorm` = faster 3-agent version for quick checks. `/design-status` = check progress on a running loop.
 
-Steps 3-5 MANDATORY on every new project or landing page touch.
+Steps 3-5 and 9 MANDATORY on every new project or landing page touch.
 
 #### Hard bans (permanent — violation = revert)
 - NEVER write raw `className="..."` from scratch for layout/hero sections
