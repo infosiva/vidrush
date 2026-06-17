@@ -66,6 +66,40 @@ This rule fires EVERY time. No exceptions for "small" fixes, "obvious" changes, 
 
 ---
 
+## MANDATORY: Portfolio Design System (HARD RULE — auto-trigger every UI touch)
+
+**Source of truth: `agents/design-system/MASTER.md`**
+
+### Before ANY visual change to ANY project:
+1. **Read `design-system/MASTER.md`** — check theme registry, confirm no bg+accent collision
+2. **Pick layout prompt from `design-system/LAYOUT-PROMPTS.md`** — matching category (finance, education, health, dev-tools, productivity, creative, travel)
+3. **Run `python3 ~/.claude/skills/ui-ux-pro-max/scripts/search.py "<project> <category>" --design-system --stack nextjs`** — get palette + style + UX
+4. **Apply globals-template.css** — copy to project, replace `%%TOKENS%%` with tokens from MASTER.md
+5. **Animated right panel is MANDATORY** — every project hero has live product demo, not static illustration
+
+### Design tool pipeline (all 7 steps, no skipping):
+```
+/design-shotgun       → 3 directions, pick furthest from portfolio
+/design-html          → canvas HTML+Tailwind generation
+/ui-ux-pro-max        → quality + motion + accessibility pass
+/21st-registry        → pull polished components (never hand-roll common UI)
+/emil-design-eng      → spacing, taste, micro-interactions
+/animate              → Framer Motion, spring physics
+/fixing-accessibility → WCAG 4.5:1, focus states, aria
+```
+
+### Collision guard (hard rule):
+- Grep `design-system/MASTER.md` "Quick Collision Checker" section before assigning any theme
+- If bg hex already in use → pick different shade
+- After assigning → add to MASTER.md collision list
+
+### protofast design system:
+- Tokens: `--background: #080d1a`, `--accent: #6366f1` (indigo), dark dev-tools category
+- Uses TEMPLATE 4 from LAYOUT-PROMPTS.md
+- Right panel: code snippet typing + live preview rendering
+
+---
+
 ## MANDATORY: Load project-update-wave skill first
 
 **Before ANY work in this directory:**
