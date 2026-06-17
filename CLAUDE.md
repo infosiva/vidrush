@@ -750,7 +750,7 @@ This sequence is non-negotiable. "I'll check later" = violation.
 1. `/design-shotgun` — 3 directions, pick furthest from existing portfolio
 2. `/design-html` — Claude canvas generates production HTML + Tailwind
 3. `/ui-ux-pro-max` — premium quality pass (layout, spacing, hierarchy)
-4. `/21st-registry` — pull polished components before hand-rolling (buttons, cards, forms, pricing)
+4. `/21st-registry` — pull polished components before hand-rolling (buttons, cards, forms, pricing). **MCP wired 2026-06-17**: `mcp__21st-dev-magic__*` tools live via `21st-dev-magic` server in `~/.claude/settings.json` (key in `.env.shared` as `TWENTYFIRST_API_KEY`) — call the MCP tool directly for real component code, don't just reference the skill name in a prompt.
 5. **Open Design MANDATORY (added 2026-06-17)** — check `~/.claude/open-design/skills/` (109 skills) before writing ANY UI block:
    - Marketing hero/landing → `/frontend-design`
    - SaaS dashboard/app → `/interface-design`
