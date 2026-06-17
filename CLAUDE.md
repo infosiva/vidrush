@@ -880,3 +880,4 @@ node agents/scripts/e2e-verify.mjs --project <name> --url https://<live-url> [--
 - Any `git push origin main` on a project with a live Vercel URL → run e2e-verify immediately after, before marking the task done in HANDOFF.md or reporting "complete" to the user.
 - Multi-project waves (logo wave, design wave, etc.) → e2e-verify each project right after its push, not batched at the end — catches problems while context is still loaded.
 - If a project has no live URL yet (new, unpushed) → skip, note in HANDOFF.md as "no live URL to verify yet".
+- **Password-gated internal tools (hub)**: P1/P8 checks expect a public H1 + nav and will false-positive on a login wall. Run `--checks p10` only (load time), or visually confirm via screenshot instead of trusting exit code.
