@@ -751,11 +751,21 @@ This sequence is non-negotiable. "I'll check later" = violation.
 2. `/design-html` — Claude canvas generates production HTML + Tailwind
 3. `/ui-ux-pro-max` — premium quality pass (layout, spacing, hierarchy)
 4. `/21st-registry` — pull polished components before hand-rolling (buttons, cards, forms, pricing)
-5. `/emil-design-eng` — polish pass (spacing, micro-interactions, taste)
-6. `/animate` — Framer Motion, spring physics, easing
-7. `/fixing-accessibility` + `/fixing-metadata` — audit
+5. **Open Design MANDATORY (added 2026-06-17)** — check `~/.claude/open-design/skills/` (109 skills) before writing ANY UI block:
+   - Marketing hero/landing → `/frontend-design`
+   - SaaS dashboard/app → `/interface-design`
+   - Forms, dialogs, tables → `/shadcn-ui`
+   - CSS vars / design tokens → `/theme-factory`
+   - Component spec/brief → `/design-brief` + `/design-review`
+   - Auth/login flows → `/login-flow`
+   - Multi-tenant products → `/platform-design`
+   - Production component code → `/frontend-dev`
+   **Enforcement:** Open Design skill invoked → its output = base layer. Then layer Emil + animate. Raw Tailwind from scratch = violation.
+6. `/emil-design-eng` — polish pass (spacing, micro-interactions, taste)
+7. `/animate` — Framer Motion, spring physics, easing
+8. `/fixing-accessibility` + `/fixing-metadata` — audit
 
-Steps 3-4 MANDATORY on every new project or landing page touch.
+Steps 3-5 MANDATORY on every new project or landing page touch.
 
 #### Hard bans (permanent — violation = revert)
 - NEVER write raw `className="..."` from scratch for layout/hero sections
@@ -789,3 +799,84 @@ Hub production URL: **`https://ai-products-hub.vercel.app`**
 - Hub controls chatbot model, rate limits, feature flags, promo codes for ALL 40 projects via Edge Config `ecfg_s5cumfsw58v5mpe9ahpkb7axmiges`
 - After any portfolio-wide change → update hub project metadata in Edge Config
 - Hub redesign needed (tracked in TaskFlow) — current layout cluttered
+
+### §Z8 — Protofast-First: Prototype Before Implementing (HARD RULE — added 2026-06-17)
+
+**Every new layout archetype or skill demo MUST be prototyped in protofast before building into any real project.**
+
+**URL:** `https://protofast.app` | **Local:** `agents/protoforge/`
+
+#### Rule
+- Any new landing page layout → build in protofast first, screenshot 375+1280px, approve visually
+- Any new Open Design skill invocation (T8–T17 archetypes) → run in protofast first
+- Only after prototype passes → copy to real project + implement
+
+#### Why
+- Prevents wasted full-project implementations of wrong layouts (happened 10+ times)
+- Protofast self-promotes: each skill demo = published page at `/demos/[skill-name]`
+- Forces visual validation before commit
+
+#### Protofast prototype steps (every time)
+```
+1. Pick template from design-system/LAYOUT-PROMPTS.md (T1–T17)
+2. Run matching Open Design skill: /swiss-creative-mode-template, /field-notes-editorial-template, etc.
+3. Paste output into protofast editor → view at localhost
+4. Playwright screenshot 375px + 1280px → read both
+5. Pass → copy to real project. Fail → iterate in protofast, NOT in real project
+6. Protofast publishes demo at /demos/[layout-name] automatically
+```
+
+#### Open Design skills for new archetypes (T8–T17)
+All installed at `~/.claude/open-design/skills/`:
+| Archetype | Open Design Skill | Extra skills |
+|-----------|-------------------|-------------|
+| T8 Swiss Editorial | `/swiss-creative-mode-template` or `/digits-fintech-swiss-template` | `/gsap-core` `/d3-visualization` |
+| T9 Bento Grid | `/shadcn-ui` + `/ui-skills` | `/animate` `/transitions-dev` |
+| T10 Cinematic | `/after-hours-editorial-template` | `/gsap-scrolltrigger` `/fal-kling-o3` |
+| T11 Typewriter Terminal | `/interface-design` | `/gsap-timeline` `/animate` |
+| T12 Magazine Editorial | `/field-notes-editorial-template` or `/editorial-burgundy-principles-template` | `/gsap-scrolltrigger` `/emil-design-eng` |
+| T13 Floating Cards | `/algorithmic-art` | `/animate` `/emil-design-eng` |
+| T14 Generative Art | `/shader-dev` or `/algorithmic-art` | `/threejs` `/animate` |
+| T15 D3 Data Hero | `/d3-visualization` | `/gsap-core` `/animate` |
+| T16 Full-Width Input | `/frontend-design` + `/shadcn-ui` | `/transitions-dev` `/animate` |
+| T17 Asymmetric Split | `/ui-skills` + `/frontend-design` | `/gsap-scrolltrigger` `/animate` |
+
+#### Canonical 33-site layout assignment
+Source of truth: `design-system/LAYOUT-PROMPTS.md` → "FULL 33-SITE ASSIGNMENT" table.
+Check it before touching any project's `app/page.tsx`. Never deviate without updating the table.
+
+---
+
+### §Z9 — E2E Verify After Every Push (HARD RULE — added 2026-06-17, no exceptions)
+
+**Every push to any project main branch MUST be followed by an E2E verify run against the live URL. A push without verification is not a completed task.**
+
+#### Why
+- Local build passing ≠ live site working. Mixed-content blocks, env var differences, CDN caching, and DNS issues only show up live.
+- Caught example: protofast.app shipped a `<Script src="http://...">` tracker tag that browsers silently blocked on HTTPS — `npm run build` passed, Playwright local passed, but every real visit threw a console error. Only a live E2E run against the deployed URL caught it.
+- Agent self-report of "pushed, build green" is not sufficient — verify the live artifact, not the local one.
+
+#### Tool
+```bash
+node agents/scripts/e2e-verify.mjs --project <name> --url https://<live-url> [--checks p1,p7,p8,p10] [--log-db]
+```
+- Runs P1–P10 checks (see §W) via Playwright against the live URL — not localhost.
+- Exit code 0 = all pass, 1 = some fail (non-critical), 2 = critical fail (P1/P7/P8 — landing broken, mobile overflow, desktop layout broken).
+- `--log-db` writes results to TaskFlow "Portfolio QA Audit" board (needs `DATABASE_URL` env).
+- Screenshots always saved to `/tmp/e2e-<project>-mobile.png` and `/tmp/e2e-<project>-desktop.png` — read them, don't just trust the exit code.
+
+#### Mandatory sequence (replaces old §Z4 step 5)
+```
+1. npm run build — zero errors
+2. git push origin main
+3. Wait for Vercel deploy to go green (vercel ls or dashboard)
+4. node agents/scripts/e2e-verify.mjs --project <name> --url <live-url>
+5. Exit code 2 → STOP, fix immediately, do not move to next project
+6. Exit code 1 → triage: fix now if quick, else log to TaskFlow and continue
+7. Exit code 0 → task complete
+```
+
+#### Auto-trigger
+- Any `git push origin main` on a project with a live Vercel URL → run e2e-verify immediately after, before marking the task done in HANDOFF.md or reporting "complete" to the user.
+- Multi-project waves (logo wave, design wave, etc.) → e2e-verify each project right after its push, not batched at the end — catches problems while context is still loaded.
+- If a project has no live URL yet (new, unpushed) → skip, note in HANDOFF.md as "no live URL to verify yet".
