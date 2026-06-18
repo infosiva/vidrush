@@ -47,6 +47,7 @@ export default function Home() {
               </a>
               <span className="text-text-muted text-sm">2 free restorations · No credit card</span>
             </div>
+            <p className="text-xs opacity-60 mt-2">Have a promo code? <a href="#promo" className="underline">Apply here</a></p>
           </div>
           <div className="animate-fadeUp" style={{ animationDelay: '100ms' }}>
             <BeforeAfterSlider />
