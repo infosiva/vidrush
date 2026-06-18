@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowRight, MessageSquare, Clock, ThumbsUp, Users, Zap } from 'lucide-react'
+import LiveStatsBar from '@/components/LiveStatsBar'
 
 // ── Dashboard stats (localStorage) ──────────────────────────
 function useRdStats() {
@@ -167,6 +168,8 @@ export default function Home() {
 
         <p style={{ color: 'rgba(241,245,249,0.3)', fontSize: 12, marginTop: 16 }}>No account required to try · Draft 10 replies free</p>
       </section>
+
+      <LiveStatsBar />
 
       {/* How it works */}
       <section id="how" style={{ maxWidth: 900, margin: '0 auto', padding: '40px 24px 80px', position: 'relative', zIndex: 10 }}>
