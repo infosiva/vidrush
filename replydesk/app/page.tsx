@@ -42,7 +42,15 @@ export default function Home() {
     <main style={{ minHeight: '100vh', background: '#0a0a14', color: '#f1f5f9', fontFamily: "'Inter', system-ui, sans-serif", overflowX: 'hidden' }}>
       {/* Nav */}
       <nav style={{ position: 'sticky', top: 0, zIndex: 50, background: 'rgba(10,10,20,0.8)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.06)', padding: '0 24px', height: 54, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontWeight: 800, fontSize: 16, letterSpacing: '-0.02em', color: '#fff' }}>Reply<span style={{ color: '#6366f1' }}>Desk</span></span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ width: 26, height: 26, borderRadius: 7, background: 'linear-gradient(135deg,#4f46e5,#6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 5.5C4 4.12 5.12 3 6.5 3h11C18.88 3 20 4.12 20 5.5v8c0 1.38-1.12 2.5-2.5 2.5H10l-4.5 4v-4H6.5C5.12 16 4 14.88 4 13.5v-8Z" fill="white"/>
+              <path d="M8 8h8M8 11h5" stroke="#4f46e5" strokeWidth="1.6" strokeLinecap="round"/>
+            </svg>
+          </span>
+          <span style={{ fontWeight: 800, fontSize: 16, letterSpacing: '-0.02em', color: '#fff' }}>Reply<span style={{ color: '#6366f1' }}>Desk</span></span>
+        </span>
         <Link href="/inbox" style={{ background: 'linear-gradient(135deg,#6366f1,#818cf8)', color: '#fff', borderRadius: 9, padding: '7px 16px', fontSize: 13, fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
           Open Inbox <ArrowRight size={13} />
         </Link>
