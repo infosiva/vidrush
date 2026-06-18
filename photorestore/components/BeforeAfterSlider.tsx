@@ -19,30 +19,33 @@ export default function BeforeAfterSlider() {
       onMouseMove={e => handleMove(e.clientX)}
       onTouchMove={e => handleMove(e.touches[0].clientX)}
     >
-      {/* "Before" — sepia layer (simulated old photo) */}
+      {/* "Before" — damaged/faded portrait simulation */}
       <div
         className="absolute inset-0"
-        style={{ filter: 'sepia(0.9) contrast(0.85) brightness(0.9)' }}
+        style={{ filter: 'sepia(0.85) contrast(0.7) brightness(0.95) saturate(0.6) blur(0.5px)' }}
       >
-        <div className="w-full h-full bg-gradient-to-br from-amber-200 via-amber-100 to-stone-200 flex items-center justify-center">
-          <div className="text-center px-8">
-            <div className="w-20 h-20 rounded-full bg-stone-300/60 mx-auto mb-4" />
-            <div className="h-2.5 bg-stone-300/60 rounded-full w-32 mx-auto mb-2" />
-            <div className="h-2 bg-stone-300/40 rounded-full w-24 mx-auto" />
+        <div className="w-full h-full bg-gradient-to-br from-amber-100 via-stone-200 to-amber-200 relative flex items-center justify-center overflow-hidden">
+          {/* Scratches */}
+          <div className="absolute inset-0 opacity-30" style={{ background: 'repeating-linear-gradient(75deg, transparent 0px, transparent 18px, rgba(120,100,70,0.4) 19px, transparent 20px)' }} />
+          {/* Portrait silhouette */}
+          <div className="relative">
+            <div className="w-28 h-28 rounded-full bg-stone-400/50 mx-auto mb-3" style={{ boxShadow: 'inset 0 -8px 16px rgba(120,100,70,0.3)' }} />
+            <div className="w-40 h-20 rounded-t-full bg-stone-400/40 mx-auto -mt-2" />
           </div>
+          {/* Water stain */}
+          <div className="absolute top-4 right-6 w-16 h-16 rounded-full bg-amber-700/10 blur-md" />
         </div>
       </div>
 
-      {/* "After" — restored layer */}
+      {/* "After" — restored, sharp, vivid portrait */}
       <div
         className="absolute inset-0"
         style={{ clipPath: `inset(0 ${100 - position}% 0 0)` }}
       >
-        <div className="w-full h-full bg-gradient-to-br from-sky-50 via-rose-50 to-amber-50 flex items-center justify-center">
-          <div className="text-center px-8">
-            <div className="w-20 h-20 rounded-full bg-rose-200/70 mx-auto mb-4" />
-            <div className="h-2.5 bg-amber-300/70 rounded-full w-32 mx-auto mb-2" />
-            <div className="h-2 bg-sky-300/50 rounded-full w-24 mx-auto" />
+        <div className="w-full h-full bg-gradient-to-br from-sky-50 via-rose-50 to-amber-50 relative flex items-center justify-center overflow-hidden">
+          <div className="relative">
+            <div className="w-28 h-28 rounded-full bg-gradient-to-br from-rose-200 to-amber-200 mx-auto mb-3 shadow-lg" />
+            <div className="w-40 h-20 rounded-t-full bg-gradient-to-br from-amber-100 to-rose-100 mx-auto -mt-2 shadow-lg" />
           </div>
         </div>
       </div>
