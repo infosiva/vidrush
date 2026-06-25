@@ -159,6 +159,72 @@ Free at aicoachlab.app
 Best,
 Siva`,
   },
+
+  invoicemint: {
+    url: 'invoicemint.app',
+    subject: (biz, _city) => `Free invoice generator for ${biz}`,
+    body: (biz, _city) => `Hi ${biz} team, Invoicemint generates professional PDF invoices in seconds — no account, no subscription. Free at invoicemint.app`,
+  },
+
+  meetscribe: {
+    url: 'meetscribe.app',
+    subject: (biz, _city) => `Auto-transcribe your client calls at ${biz}`,
+    body: (biz, _city) => `Hi ${biz} team, MeetScribe records and transcribes meetings automatically — searchable notes, action items extracted. Free at meetscribe.app`,
+  },
+
+  resumevault: {
+    url: 'resumevault.app',
+    subject: (_biz, city) => `AI CV builder for your candidates in ${city}`,
+    body: (biz, _city) => `Hi ${biz} team, ResVault builds ATS-optimised CVs for candidates in minutes. Share with clients as a free tool. Free at resumevault.app`,
+  },
+
+  replydesk: {
+    url: 'replydesk.app',
+    subject: (biz, _city) => `AI support replies for ${biz} — instant, on-brand`,
+    body: (biz, _city) => `Hi ${biz} team, ReplyDesk drafts customer support replies in your tone in under 3 seconds. Free at replydesk.app`,
+  },
+
+  anylocal: {
+    url: 'anylocal.app',
+    subject: (biz, city) => `Free local business listing for ${biz} in ${city}`,
+    body: (biz, _city) => `Hi ${biz} team, AnyLocal connects local businesses directly with nearby customers — free listing, no commission. Free at anylocal.app`,
+  },
+
+  mandirates: {
+    url: 'mandirates.app',
+    subject: (biz, _city) => `Live commodity prices for ${biz} — mandi rates`,
+    body: (biz, _city) => `Hi ${biz} team, MandiRates shows live wholesale vegetable and grain prices from Indian mandis — useful for menu costing. Free at mandirates.app`,
+  },
+
+  trackwealth: {
+    url: 'trackwealth.app',
+    subject: (biz, _city) => `Free portfolio tracker for your clients at ${biz}`,
+    body: (biz, _city) => `Hi ${biz} team, TrackWealth lets clients track investments across accounts in one dashboard. Share as a free client tool. Free at trackwealth.app`,
+  },
+
+  rideflow: {
+    url: 'rideflow.app',
+    subject: (biz, _city) => `Route optimiser for ${biz} drivers — free`,
+    body: (biz, _city) => `Hi ${biz} team, RideFlow optimises multi-stop routes for drivers automatically — saves fuel and time. Free at rideflow.app`,
+  },
+
+  vidrush: {
+    url: 'vidrush.app',
+    subject: (biz, _city) => `AI video scripts for ${biz} in 30 seconds`,
+    body: (biz, _city) => `Hi ${biz} team, Vidrush generates short-form video scripts and hooks for any product — TikTok, Reels, YouTube Shorts. Free at vidrush.app`,
+  },
+
+  worldtrends: {
+    url: 'worldtrends.today',
+    subject: (biz, _city) => `Live trending topics dashboard for ${biz}`,
+    body: (biz, _city) => `Hi ${biz} team, WorldTrends shows what's trending globally right now — useful for content planning and newsjacking. Free at worldtrends.today`,
+  },
+
+  pdfideas: {
+    url: 'pdfideas.app',
+    subject: (biz, _city) => `Turn your docs into interactive PDFs at ${biz}`,
+    body: (biz, _city) => `Hi ${biz} team, PDFideas converts any document into a shareable interactive PDF with AI summaries. Free at pdfideas.app`,
+  },
 }
 
 // ── Category → suggested product mapping ─────────────────────────────────────
@@ -180,6 +246,19 @@ const CATEGORY_PRODUCT_MAP: Record<string, string> = {
   bar:         'kwizzo',
   'travel agent': 'roamplan',
   hotel:       'roamplan',
+  freelancer:  'invoicemint',
+  tradesman:   'invoicemint',
+  accountant:  'invoicemint',
+  agency:      'meetscribe',
+  consultant:  'meetscribe',
+  clinic:      'meetscribe',
+  recruitment: 'resumevault',
+  'career coach': 'resumevault',
+  taxi:        'rideflow',
+  courier:     'rideflow',
+  logistics:   'rideflow',
+  'financial advisor': 'trackwealth',
+  'indian restaurant': 'mandirates',
 }
 
 // ── OSM tag map: category keyword → OSM shop/amenity tag ─────────────────────
@@ -202,6 +281,9 @@ const OSM_TAGS: Record<string, { key: string; value: string }[]> = {
   'travel agent': [{ key: 'shop', value: 'travel_agency' }],
   hotel:        [{ key: 'tourism', value: 'hotel' }],
   coach:        [{ key: 'amenity', value: 'community_centre' }],
+  taxi:         [{ key: 'amenity', value: 'taxi' }],
+  courier:      [{ key: 'office',  value: 'logistics' }],
+  clinic:       [{ key: 'amenity', value: 'clinic' }],
 }
 
 // City → bounding box [south, west, north, east]
