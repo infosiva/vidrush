@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "import-csv": "node --env-file=.env.local --import=tsx/esm scripts/import-csv.ts"
+    "import-csv": "node --env-file=.env.local --import=tsx/esm scripts/import-csv.ts",
+    "send-from-db": "node --env-file=.env.local --import=tsx/esm scripts/send-from-db.ts"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.2",
