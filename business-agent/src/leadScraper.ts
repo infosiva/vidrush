@@ -2,21 +2,23 @@
  * leadScraper.ts — Find local businesses by city + category, output CSV for outreach
  *
  * Sources (no API key needed):
- *   1. Yell.com (UK business directory)
- *   2. Yelp (US/international)
+ *   1. OpenStreetMap Overpass API (primary — structured JSON, never blocks)
+ *   2. Yell.com / Yelp (legacy fallback — often blocked by JS rendering)
  *
  * Usage:
- *   npx tsx src/leadScraper.ts --city "Manchester" --category "tutor" --product tutiq --limit 50
+ *   npx tsx src/leadScraper.ts --city "Manchester" --category "salon" --product bookingcall --limit 50
  *   npx tsx src/leadScraper.ts --city "London" --category "restaurant" --product draftcal --limit 100
- *   npx tsx src/leadScraper.ts --city "Birmingham" --category "gym" --product draftcal --limit 50
+ *   npx tsx src/leadScraper.ts --city "Birmingham" --category "tutor" --product tutiq --limit 50
+ *   npx tsx src/leadScraper.ts --city "London" --category "salon" --product bookingcall --source yell  # legacy
  *
- * Output: leads/YYYY-MM-DD-{city}-{category}.csv
+ * Output: leads/YYYY-MM-DD-{city}-{category}-{product}.csv
  * Columns: name, address, phone, website, email_guess, product, email_subject, email_body
  */
 
 import * as fs from 'fs'
 import * as path from 'path'
 import * as https from 'https'
+import { execSync } from 'child_process'
 import { load } from 'cheerio'
 
 // ── CLI args ──────────────────────────────────────────────────────────────────
@@ -24,10 +26,11 @@ const args = process.argv.slice(2)
 const get  = (flag: string) => { const i = args.indexOf(flag); return i >= 0 ? args[i+1] : null }
 
 const CITY     = get('--city')     ?? 'London'
-const CATEGORY = get('--category') ?? 'tutor'
-const PRODUCT  = get('--product')  ?? 'tutiq'
+const CATEGORY = get('--category') ?? 'salon'
+const PRODUCT  = get('--product')  ?? ''  // '' = auto-detect from category
 const LIMIT    = parseInt(get('--limit') ?? '50', 10)
-const COUNTRY  = get('--country')  ?? 'uk'   // 'uk' → Yell, 'us' → Yelp
+const COUNTRY  = get('--country')  ?? 'uk'
+const SOURCE   = get('--source')   ?? 'osm'  // 'osm' (default) | 'yell' | 'yelp'
 
 // ── Product → email template map ─────────────────────────────────────────────
 const PRODUCTS: Record<string, {
@@ -126,6 +129,36 @@ Free at speakiq.app
 Best,
 Siva`,
   },
+
+  bookingcall: {
+    url: 'bookingcall.app',
+    subject: (biz, city) => `Never miss a booking call at ${biz}`,
+    body: (biz, city) => `Hi ${biz} team,
+
+Every missed call is a missed booking. BookingCall is a free AI receptionist that answers calls 24/7, takes appointment details, and sends you a message instantly.
+
+No hardware needed — works on your existing phone number. Takes 5 minutes to set up.
+
+Free at bookingcall.app — no credit card needed.
+
+Best,
+Siva`,
+  },
+
+  aicoachlab: {
+    url: 'aicoachlab.app',
+    subject: (biz, city) => `Free AI coaching tool for your clients in ${city}`,
+    body: (biz, city) => `Hi ${biz} team,
+
+AICoachLab gives your clients an AI coach available 24/7 between sessions — answers questions, tracks goals, keeps momentum going.
+
+Works as a free value-add you share with clients. They get daily support; you get clients who come back prepared.
+
+Free at aicoachlab.app
+
+Best,
+Siva`,
+  },
 }
 
 // ── Category → suggested product mapping ─────────────────────────────────────
@@ -138,11 +171,100 @@ const CATEGORY_PRODUCT_MAP: Record<string, string> = {
   cafe:        'draftcal',
   coffee:      'draftcal',
   gym:         'draftcal',
-  salon:       'draftcal',
+  salon:       'bookingcall',
+  hairdresser: 'bookingcall',
+  dentist:     'bookingcall',
+  physio:      'bookingcall',
+  nail:        'bookingcall',
   pub:         'kwizzo',
   bar:         'kwizzo',
   'travel agent': 'roamplan',
   hotel:       'roamplan',
+}
+
+// ── OSM tag map: category keyword → OSM shop/amenity tag ─────────────────────
+const OSM_TAGS: Record<string, { key: string; value: string }[]> = {
+  salon:        [{ key: 'shop',    value: 'hairdresser' }, { key: 'shop', value: 'beauty' }],
+  hairdresser:  [{ key: 'shop',    value: 'hairdresser' }],
+  beauty:       [{ key: 'shop',    value: 'beauty' }],
+  nail:         [{ key: 'shop',    value: 'beauty' }],
+  restaurant:   [{ key: 'amenity', value: 'restaurant' }],
+  cafe:         [{ key: 'amenity', value: 'cafe' }],
+  coffee:       [{ key: 'amenity', value: 'cafe' }],
+  pub:          [{ key: 'amenity', value: 'pub' }],
+  bar:          [{ key: 'amenity', value: 'bar' }],
+  gym:          [{ key: 'leisure', value: 'fitness_centre' }],
+  dentist:      [{ key: 'amenity', value: 'dentist' }],
+  physio:       [{ key: 'amenity', value: 'physiotherapist' }],
+  tutor:        [{ key: 'amenity', value: 'school' }, { key: 'amenity', value: 'language_school' }],
+  tutoring:     [{ key: 'amenity', value: 'school' }],
+  'language school': [{ key: 'amenity', value: 'language_school' }],
+  'travel agent': [{ key: 'shop', value: 'travel_agency' }],
+  hotel:        [{ key: 'tourism', value: 'hotel' }],
+  coach:        [{ key: 'amenity', value: 'community_centre' }],
+}
+
+// City → bounding box [south, west, north, east]
+const CITY_BBOX: Record<string, [number, number, number, number]> = {
+  london:     [51.28, -0.51, 51.69,  0.33],
+  manchester: [53.34, -2.40, 53.55, -1.97],
+  birmingham: [52.38, -2.02, 52.58, -1.73],
+  bristol:    [51.38, -2.72, 51.54, -2.49],
+  leeds:      [53.72, -1.68, 53.87, -1.43],
+  edinburgh:  [55.86, -3.35, 55.99, -3.05],
+  glasgow:    [55.80, -4.36, 55.93, -4.12],
+  liverpool:  [53.35, -3.01, 53.47, -2.82],
+  sheffield:  [53.32, -1.57, 53.46, -1.34],
+  nottingham: [52.89, -1.23, 53.01, -1.09],
+}
+
+// ── OSM Overpass scraper (primary — structured JSON, never blocks) ────────────
+async function scrapeOSM(category: string, city: string, limit: number): Promise<Lead[]> {
+  const cityKey = city.toLowerCase().replace(/\s+/g, '')
+  const bbox    = CITY_BBOX[cityKey] ?? CITY_BBOX['london']
+  const tags    = OSM_TAGS[category.toLowerCase()] ?? [{ key: 'shop', value: category.toLowerCase() }]
+
+  const nodeQueries = tags.map(t =>
+    `node["${t.key}"="${t.value}"](${bbox[0]},${bbox[1]},${bbox[2]},${bbox[3]});`
+  ).join('\n')
+
+  const query = `[out:json][timeout:30];(\n${nodeQueries}\n);out body ${limit * 2};`
+
+  console.log(`  OSM Overpass: ${tags.map(t => t.key + '=' + t.value).join(' OR ')} in ${city}`)
+
+  const ENDPOINTS = [
+    'https://overpass-api.de/api/interpreter',
+    'https://overpass.openstreetmap.ru/api/interpreter',
+    'https://overpass.openstreetmap.fr/api/interpreter',
+  ]
+
+  for (const endpoint of ENDPOINTS) {
+    try {
+      const tmpFile = `/tmp/osm-query-${Date.now()}.txt`
+      fs.writeFileSync(tmpFile, 'data=' + encodeURIComponent(query))
+      const result = execSync(
+        `curl -s --max-time 25 -H "Content-Type: application/x-www-form-urlencoded" "${endpoint}" --data-binary @${tmpFile}`,
+        { encoding: 'utf8' }
+      )
+      fs.unlinkSync(tmpFile)
+      if (!result.startsWith('{')) { console.log(`  ${endpoint} rate-limited, trying next...`); continue }
+      const data = JSON.parse(result)
+      const elements: any[] = data.elements ?? []
+      return elements
+        .filter(e => e.tags?.name)
+        .map(e => ({
+          name:    e.tags.name,
+          address: [e.tags['addr:housenumber'], e.tags['addr:street'], e.tags['addr:city']]
+                     .filter(Boolean).join(', ') || city,
+          phone:   e.tags.phone ?? e.tags['contact:phone'] ?? '',
+          website: e.tags.website ?? e.tags['contact:website'] ?? '',
+        }))
+    } catch (err) {
+      console.error(`  ${endpoint} error:`, (err as Error).message)
+    }
+  }
+  console.error('  All OSM endpoints failed')
+  return []
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -269,20 +391,23 @@ async function scrapeYelp(category: string, city: string, pages: number): Promis
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 async function main() {
-  const productKey = PRODUCT in PRODUCTS
+  // Explicit --product flag wins; fall back to category map if not provided
+  const productKey = PRODUCT && PRODUCT in PRODUCTS
     ? PRODUCT
     : CATEGORY_PRODUCT_MAP[CATEGORY.toLowerCase()] ?? 'draftcal'
 
   const product = PRODUCTS[productKey]
   const pages   = Math.ceil(LIMIT / 10)
 
-  console.log(`\n🔍 Scraping: "${CATEGORY}" in ${CITY} (${COUNTRY.toUpperCase()})`)
+  console.log(`\n🔍 Scraping: "${CATEGORY}" in ${CITY} [source: ${SOURCE.toUpperCase()}]`)
   console.log(`📦 Product: ${productKey} → ${product.url}`)
-  console.log(`📄 Pages: ${pages} (~${pages * 10} results)\n`)
+  if (SOURCE !== 'osm') console.log(`📄 Pages: ${pages} (~${pages * 10} results)\n`)
 
   let rawLeads: Lead[] = []
 
-  if (COUNTRY === 'uk') {
+  if (SOURCE === 'osm') {
+    rawLeads = await scrapeOSM(CATEGORY, CITY, LIMIT)
+  } else if (COUNTRY === 'uk' || SOURCE === 'yell') {
     rawLeads = await scrapeYell(CATEGORY, CITY, pages)
   } else {
     rawLeads = await scrapeYelp(CATEGORY, CITY, pages)
