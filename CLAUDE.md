@@ -1,5 +1,47 @@
 # agents/ — Project Standards
 
+## §0-PUBLIC-APIS — FREE API LIBRARY (HARD RULE — CHECK BEFORE ADDING ANY DATA FEATURE)
+
+**Repo cloned at:** `/Users/sivaprakasam/projects/agents/public-apis/` (1631 free APIs, 40+ categories)
+**Parser script:** `node public-apis/extract-for-projects.mjs`
+**Full spec:** `~/.claude/projects/-Users-sivaprakasam-projects-agents/memory/project_public_apis.md`
+
+### MANDATORY — before any of these actions:
+- Hardcoding mock/fake data for any feature
+- Paying for a third-party API subscription
+- Building a scraper for data that might have a free API
+
+**Check the library first:**
+```bash
+# See all free APIs matching a project's category
+node /Users/sivaprakasam/projects/agents/public-apis/extract-for-projects.mjs
+
+# Filter by category (Finance, Jobs, Weather, News, etc.)
+node /Users/sivaprakasam/projects/agents/public-apis/extract-for-projects.mjs --cat Finance
+
+# Full JSON — pipe to jq for custom filtering
+node /Users/sivaprakasam/projects/agents/public-apis/extract-for-projects.mjs --json | jq '.[] | select(.auth == "none")'
+```
+
+**Key free no-auth APIs already confirmed useful:**
+| Need | API | URL |
+|---|---|---|
+| Quiz questions | Open Trivia DB | `opentdb.com/api.php` |
+| Weather | Open-Meteo | `api.open-meteo.com` |
+| Currency rates | Frankfurter | `api.frankfurter.app` |
+| Geocoding/maps | Nominatim | `nominatim.openstreetmap.org` |
+| Nutrition/food | Open Food Facts | `world.openfoodfacts.org/api` |
+| Books | Open Library | `openlibrary.org/api` |
+| Flight data | OpenSky Network | `opensky-network.org/api` |
+| News | GNews | `gnews.io` (free tier) |
+
+**Update library:**
+```bash
+cd /Users/sivaprakasam/projects/agents/public-apis && git pull && node extract-for-projects.mjs --json > apis.json
+```
+
+---
+
 ## §0-VERCEL — WHICH PROJECT GOES WHERE (HARD RULE — NO EXCEPTIONS, PERMANENT)
 
 **This rule exists because 8 old projects were accidentally relinked to sivaprakasam, making them unreachable for weeks.**
@@ -35,6 +77,88 @@ cat .vercel/project.json | grep orgId
 - **NEVER `rm -rf .vercel` on a live project** — deleting + redeploying creates NEW project, detaches domains, breaks live sites immediately
 - To fix wrong orgId: ONLY edit `.vercel/project.json` in place — change `orgId` and `projectId` values, never delete the file
 - Wrong account found → fix the JSON, verify domain still attached via Vercel API, then redeploy. Never nuke and redo.
+
+---
+
+## §0-DESIGN-PIPELINE — CSS-ONLY CHANGES ARE BANNED (HARD RULE — NO EXCEPTIONS, PERMANENT)
+
+**This rule was added because CSS-var-only fixes were shipped as "complete" when 15 of 16 pipeline steps were skipped.**
+
+### What happened (never repeat this)
+Updating `--background` and `--accent` in `globals.css` is NOT a project update. It is step 3 of 16. Shipping CSS vars without the rest = wasted push, false sense of progress, projects still broken.
+
+### The ONLY acceptable "project update" = ALL 16 steps complete:
+
+| Step | What | Skip condition |
+|------|------|----------------|
+| 1 | HANDOFF.md written before first file touch | none |
+| 2 | `/design-shotgun` → 3 directions → pick layout archetype DIFFERENT from last 3 touched | none |
+| 3 | Unique bg+accent from category table, no collision | none |
+| 4 | Animated right panel — REAL product demo, not illustration or static image | none |
+| 5 | Branded navbar — accent-colored key word + icon/emoji mark | none |
+| 6 | `app/icon.tsx` favicon | none |
+| 7 | Context/level-adaptive AI prompts (if project has AI feature) | only if no AI feature |
+| 8 | Live stats — real session data only, hidden when zero, NO fake baselines | none |
+| 9 | Plan preview — free vs pro real diff, `PlanPreview` component | none |
+| 10 | Dashboard/feature preview — empty-state motivates upgrade, `DashboardPreview` | none |
+| 11 | Trending/dynamic content section — hidden until real data exists | only if not applicable |
+| 12 | Promo code system — `lib/promoCode.ts` + `app/api/promo/route.ts` + `hooks/usePromo.ts` | none |
+| 13 | Chatbot — `FloatingChatWrapper`, Groq fallback chain, 60 req/hr, scoped system prompt | none |
+| 14 | Feedback widget — `app/api/feedback/route.ts` + `FeedbackWidget` in layout | none |
+| 15 | Zero fake data — all stats/quotes/logos real or removed | none |
+| 16 | `npm run build` → Playwright 375+1280px → push → E2E live verify | none |
+
+### Canonical reference: quizbites
+quizbites (`agents/quizbites/`) is the reference implementation. Before touching any project, read its component list and replicate the same depth.
+
+### Layout selection rule (step 2 of pipeline)
+1. Check `design-system/LAYOUT-PROMPTS.md` — find template matching project category (T1–T18)
+2. If project already has correct T1–T18 layout implemented and working → KEEP IT, skip to step 3
+3. If project has wrong or missing layout → pick closest T1–T18 template, build in protofast first
+4. Only if NO template fits → design a new archetype, add it to LAYOUT-PROMPTS.md as T19+
+5. NEVER run `/design-shotgun` with open-ended "pick any layout" — always anchor to the template list
+6. **Every template (existing or new) must have its AI-tool row filled in** per the AI-tool-layer table in `LAYOUT-PROMPTS.md` (Nano Banana / Stitch / NotebookLM / Veo / code-generated). A template with a visual need and no AI-tool assigned is incomplete — fill it in before using the template, don't skip.
+
+### Auto-trigger
+ANY of these phrases = full 16-step pipeline, NOT a CSS fix:
+- "update [project]", "fix [project]", "redesign [project]", "add theme", "make it look better"
+- "wave all projects", "do all projects", "update the portfolio"
+
+**Doing step 3 alone and calling it done = violation. Redo the work.**
+
+---
+
+## §0-DESIGN-LOCK — FINALIZE DESIGN BEFORE ANY CODE CHANGE (HARD RULE — NO EXCEPTIONS, PERMANENT)
+
+**Design must be fully decided — tool-checked, layout-picked, logo-assigned — before the first line of code or CSS changes. No code-first, theme-later.**
+
+### Order, every project, every touch:
+1. Check Google free-tool workflow (`~/.claude/CLAUDE.md` § Google Free-Tool Workflow) — Stitch wireframe / NotebookLM research / Nano Banana visuals considered, not skipped
+2. Run full design tool pipeline (`/design-shotgun` → `/design-html` → `/ui-ux-pro-max` → `/21st-registry` → Open Design skill match → `/emil-design-eng` → `/animate`) and pick the T1–T17 layout per §0-DESIGN-PIPELINE step 2
+3. Lock bg+accent, layout archetype, demo panel type, and **logo concept** — write all 4 into HANDOFF.md as a finalized design block BEFORE touching any file
+4. Only after the design block is written → start implementation
+
+**If a design tool needed for the job is missing or not installed → STOP, install/wire it first.** Never substitute raw Tailwind or skip a step because the tool isn't set up yet — fix the gap, then proceed. "We don't have that tool" is not a reason to skip; it's a reason to install it.
+
+### Dedicated logo — MANDATORY, every project, no exceptions
+- Every project ships a **real, project-specific logo mark** — not the Next.js default, not a bare emoji standing alone, not a copy-pasted mark from another project.
+- Logo = icon/symbol (can be emoji-based or SVG) + wordmark, with the product's key word in `var(--accent)`, used consistently in: navbar, `app/icon.tsx` favicon, and OG image.
+- Favicon (`app/icon.tsx`) color MUST match the project's actual accent — verify against `globals.css`, never leave a stale/wrong-color gradient (this exact bug hit quizbites — purple favicon on an amber-themed site).
+- No stray root-level `app/icon.tsx` shadowing `src/app/` — check for this every time (recurring portfolio bug, confirmed in draftcal/resumevault/trackwealth).
+
+### End-of-pipeline completeness test — MANDATORY, run before marking any project done
+Before declaring a project pipeline complete, verify EVERY item below is actually true — not assumed:
+- [ ] All 16 §0-DESIGN-PIPELINE steps done (not just step 3)
+- [ ] Logo present: navbar + favicon + OG image, correct accent color, visible at 375px and 1280px
+- [ ] Google free-tool checklist considered (step 1 above)
+- [ ] No stray `app/icon.tsx` shadowing bug
+- [ ] Chatbot + feedback widget both live and responding
+- [ ] `npm run build` exits 0
+- [ ] Pushed to main, Vercel deploy green
+- [ ] §Z9 E2E verify run against the LIVE url (not localhost) — P1–P10 checked
+- [ ] MCP/tool check: every design tool the pipeline calls for (21st-registry MCP, Figma MCP if used, image-gen/Nano Banana if used) actually returned real output — not silently skipped or failed
+
+**If ANY box is unchecked → project is NOT done. Go back and complete it. 100% or it doesn't count as shipped.**
 
 ---
 
