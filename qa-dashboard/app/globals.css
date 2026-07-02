@@ -1,0 +1,15 @@
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; }
+:root {
+  --bg: #0a0f1e;
+  --bg2: #111827;
+  --border: rgba(255,255,255,0.08);
+  --text: #e2e8f0;
+  --muted: rgba(226,232,240,0.5);
+  --pass: #10b981;
+  --warn: #f59e0b;
+  --fail: #ef4444;
+  --accent: #6366f1;
+}
+button { cursor: pointer; font-family: inherit; }
+a { color: inherit; }

@@ -166,6 +166,13 @@ async function runChecks(page, label) {
       // Skip fixed/absolute positioned orb/bg elements that intentionally bleed
       const pos = window.getComputedStyle(el).position;
       if (pos === 'fixed') return;
+      // Skip elements clipped by an overflow:hidden ancestor (marquee tracks, animated elements)
+      let anc = el.parentElement;
+      while (anc && anc !== document.documentElement) {
+        const ov = window.getComputedStyle(anc).overflow;
+        if (ov === 'hidden' || ov === 'clip') return;
+        anc = anc.parentElement;
+      }
       const rect = el.getBoundingClientRect();
       if (rect.right > docW + 4) overflowing.push(el.tagName + (el.className ? '.' + el.className.toString().split(' ')[0] : ''));
     });
@@ -257,6 +264,97 @@ async function runChecks(page, label) {
     else results.warn.push('No obvious CTA found above fold');
   } catch {
     results.warn.push('CTA check skipped');
+  }
+
+  // P6 — TEXT OVERLAP: detect text elements that overlap each other above fold
+  const overlapIssues = await page.evaluate(() => {
+    const SKIP_TAGS = new Set(['SCRIPT','STYLE','META','LINK','HEAD','SVG','PATH','G','DEFS']);
+    const textEls = [];
+    const elRefs = [];
+    document.querySelectorAll('h1,h2,h3,h4,p,span,a,button,label,li').forEach(el => {
+      if (SKIP_TAGS.has(el.tagName)) return;
+      const style = window.getComputedStyle(el);
+      if (style.visibility === 'hidden' || style.display === 'none' || style.opacity === '0') return;
+      // skip fixed elements AND anything inside a fixed ancestor (cookie banners, sticky navs)
+      if (style.position === 'fixed') return;
+      let anc = el.parentElement;
+      let inFixed = false;
+      while (anc && anc !== document.body) {
+        if (window.getComputedStyle(anc).position === 'fixed') { inFixed = true; break; }
+        anc = anc.parentElement;
+      }
+      if (inFixed) return;
+      const rect = el.getBoundingClientRect();
+      if (rect.width < 5 || rect.height < 5) return;
+      if (rect.top > 900 || rect.bottom < 0) return;
+      // Only leaf-ish: has direct text content of meaningful length
+      const directText = Array.from(el.childNodes).some(n => n.nodeType === 3 && n.textContent.trim().length > 3);
+      if (!directText) return;
+      textEls.push({ tag: el.tagName, text: el.textContent.trim().slice(0,35), top: rect.top, left: rect.left, bottom: rect.bottom, right: rect.right });
+      elRefs.push(el);
+    });
+
+    const overlaps = [];
+    for (let i = 0; i < textEls.length; i++) {
+      for (let j = i + 1; j < textEls.length; j++) {
+        // Skip ancestor/descendant pairs — they naturally overlap
+        if (elRefs[i].contains(elRefs[j]) || elRefs[j].contains(elRefs[i])) continue;
+        const a = textEls[i], b = textEls[j];
+        const xOverlap = a.left < b.right - 4 && a.right > b.left + 4;
+        const yOverlap = a.top < b.bottom - 4 && a.bottom > b.top + 4;
+        if (xOverlap && yOverlap) {
+          overlaps.push(`"${a.text}" overlaps "${b.text}" @y=${Math.round(a.top)}`);
+          if (overlaps.length >= 4) return overlaps;
+        }
+      }
+    }
+    return overlaps;
+  });
+
+  if (overlapIssues.length > 0) {
+    overlapIssues.forEach(o => results.fail.push(`TEXT OVERLAP: ${o}`));
+  } else {
+    results.pass.push('No text overlap detected');
+  }
+
+  // P7 — BASIC UI CHECKLIST
+  // Nav present
+  const navPresent = await page.locator('nav, header, [role="navigation"]').first().isVisible().catch(() => false);
+  if (navPresent) results.pass.push('Navbar/header visible');
+  else results.warn.push('No navbar/header found');
+
+  // Images load (no broken img)
+  const brokenImgs = await page.evaluate(() => {
+    const imgs = Array.from(document.querySelectorAll('img'));
+    return imgs.filter(img => !img.complete || img.naturalWidth === 0).map(img => img.src?.slice(0,60)).slice(0,3);
+  });
+  if (brokenImgs.length > 0) results.warn.push(`Broken images: ${brokenImgs.join(', ')}`);
+  else results.pass.push('All images loaded');
+
+  // No "undefined" or "[object Object]" text visible
+  const uglyText = await page.evaluate(() => {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const found = [];
+    let node;
+    while ((node = walker.nextNode())) {
+      const t = node.textContent.trim();
+      if (t === 'undefined' || t === '[object Object]' || t === 'null' || t === 'NaN') {
+        const el = node.parentElement;
+        const rect = el?.getBoundingClientRect();
+        if (rect && rect.width > 0 && rect.top < 800) found.push(`"${t}" in ${el?.tagName}`);
+      }
+    }
+    return found.slice(0,3);
+  });
+  if (uglyText.length > 0) uglyText.forEach(t => results.fail.push(`Raw JS value rendered: ${t}`));
+  else results.pass.push('No raw JS values rendered');
+
+  // Page title set (not default "My App" etc)
+  const title = await page.title();
+  if (!title || title === 'Create Next App' || title === 'Next.js App' || title === 'Untitled') {
+    results.warn.push(`Generic page title: "${title}"`);
+  } else {
+    results.pass.push(`Page title set: "${title.slice(0,50)}"`);
   }
 
   return results;
