@@ -42,6 +42,86 @@ cd /Users/sivaprakasam/projects/agents/public-apis && git pull && node extract-f
 
 ---
 
+## §0-VISUAL-QA — PLAYWRIGHT VISUAL GATE MANDATORY BEFORE EVERY PUSH (HARD RULE — NO EXCEPTIONS, PERMANENT)
+
+**This rule was added 2026-07-02 after speakiq.app shipped with white text on light background — invisible above the fold. The QA script caught 12 contrast/overflow failures that were invisible to code review.**
+
+### What fires on every `git push`
+Pre-push hook at `.git/hooks/pre-push` runs `scripts/visual-qa.mjs` automatically.
+
+**5 checks per viewport (375px mobile + 1280px desktop = 10 checks total):**
+1. H1 visible and readable above fold
+2. No horizontal overflow (scrollbar = mobile UX broken)
+3. No console errors (JS crashes hidden from code review)
+4. **Contrast ratio ≥ 2.5:1 above fold** — catches white-on-white, low-opacity text on similar bg
+5. Primary CTA visible without scroll
+
+**Exit codes:**
+- `0` = all pass → push allowed
+- `1` = warnings → push allowed, review screenshots
+- `2` = critical fail → **PUSH BLOCKED** — fix before pushing
+
+**Screenshots always saved to:** `/tmp/vqa-<project>-mobile.png` and `/tmp/vqa-<project>-desktop.png` — READ THEM before reporting QA done.
+
+### Install hooks
+```bash
+# Single project (run from project dir):
+bash /Users/sivaprakasam/projects/agents/scripts/install-visual-qa-hook.sh
+
+# All Next.js projects at once:
+bash /Users/sivaprakasam/projects/agents/scripts/install-visual-qa-hook.sh --all
+```
+
+### Run manually (any time)
+```bash
+# Against live deployed URL:
+node agents/scripts/visual-qa.mjs --url https://speakiq.app --project speakiq --no-server
+
+# Against local dev server (auto-starts if not running):
+node agents/scripts/visual-qa.mjs --project kwizzo
+
+# Against known live URL by project name:
+node agents/scripts/visual-qa.mjs --live speakiq
+```
+
+### Projects with hooks installed (2026-07-02)
+speakiq, roamplan, draftcal, protoforge, kwizzo, quizbites, tutiq, invoicemint, trackwealth, resumevault
+
+**Install on every new project at scaffold time.** Add to §F scaffold checklist.
+
+### What this catches (that code review misses)
+| Issue | Example caught |
+|---|---|
+| White text on light bg | speakiq hero: `rgba(255,255,255,0.42)` on `rgba(255,255,255,0.04)` = ratio 1.0 |
+| Dark text on dark bg | Any project using `var(--foreground)` without setting bg |
+| Horizontal overflow | Marquee/orb elements positioned outside viewport |
+| H1 missing/invisible | Page renders but headline has 0 height (CSS collision) |
+| Console JS errors | Silent crashes that break features |
+
+### Hard rules
+- NEVER `git push` without visual QA passing (exit 0 or 1)
+- Exit code 2 = stop, fix the contrast/layout issue, re-run
+- Skip only allowed with `git push --no-verify` AND only when pushing a non-UI change (e.g. env var update, backend-only route) — document the skip reason in commit message
+- After fixing a contrast issue: re-run `--live` against deployed URL to confirm fix visible in production, not just in build
+
+### Common contrast fixes
+```typescript
+// LOW CONTRAST: rgba(255,255,255,0.42) on rgba(255,255,255,0.04) → ratio 1.0
+// FIX: raise opacity of text AND/OR background
+color: 'rgba(255,255,255,0.75)',      // was 0.42
+background: 'rgba(255,255,255,0.10)', // was 0.04
+
+// LOW CONTRAST: light-colored text on same-hue translucent bg
+color: '#e0e7ff',                     // white-tinted, not colored
+background: 'rgba(99,102,241,0.22)',  // was 0.10
+
+// Hero text invisible on wrong bg:
+// → Add explicit dark bg to hero section wrapper, not body
+// → Never rely on layout.tsx bg color for hero sections with white text
+```
+
+---
+
 ## §0-VERCEL — WHICH PROJECT GOES WHERE (HARD RULE — NO EXCEPTIONS, PERMANENT)
 
 **This rule exists because 8 old projects were accidentally relinked to sivaprakasam, making them unreachable for weeks.**
@@ -362,10 +442,11 @@ Auto-trigger: any layout.tsx edit → check AdSense tag present. Missing = add i
 
 ### §E — Testing pipeline before push (full sequence)
 1. `npm run build` — zero errors
-2. `npm run dev &` — start server
-3. Playwright screenshots 375px + 1280px — read and verify visually
-4. Check: no horizontal overflow mobile, hero visible above fold, CTA clickable, chatbot FAB visible
-5. `git push` only after all 4 pass
+2. `npm run dev &` — start server on PORT
+3. **`node agents/scripts/visual-qa.mjs --url http://localhost:PORT --project <name> --no-server`** — runs 10 checks (contrast, H1, overflow, CTA, errors), saves screenshots to `/tmp/vqa-<name>-{mobile,desktop}.png`
+4. READ both screenshots — confirm hero readable, CTA visible, no layout breaks
+5. Exit 0 or 1 → `git push` (pre-push hook re-runs visual-qa automatically)
+6. Exit 2 → fix the failure, re-run, never push with `--no-verify` on UI changes
 6. After push: `vercel ls` or check Vercel dashboard — deployment must go green
 7. If Vercel build fails: fix immediately, do NOT leave broken deploy
 
