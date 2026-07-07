@@ -6,6 +6,7 @@ import path from "node:path";
 import { parseFindings, parseSummary } from "./parse-findings.mjs";
 import { generateFix } from "./fix-generators.mjs";
 import { renderDiff, promptApproval } from "./diff-presenter.mjs";
+import { applyFix } from "./applier.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixture = JSON.parse(
@@ -131,4 +132,45 @@ test("promptApproval defaults to 'n' on unrecognized input (never silently appli
   const diff = { kind: "paste", label: "x", destination: "session-opener", pasteText: "x", targetFile: null };
   const result = await promptApproval(diff, { readInput: async () => "banana" });
   assert.equal(result, "n");
+});
+
+test("applyFix for command-type calls execCommand with commandText", () => {
+  const calls = [];
+  const diff = { kind: "command", label: "x", commandText: "claude mcp remove playwright" };
+  const result = applyFix(diff, { execCommand: (cmd) => calls.push(cmd) });
+  assert.equal(result.applied, true);
+  assert.equal(calls[0], "claude mcp remove playwright");
+});
+
+test("applyFix for command-type also writes settingsAfter when present", () => {
+  const writes = [];
+  const diff = {
+    kind: "command",
+    label: "x",
+    commandText: "echo noop",
+    settingsAfter: { mcpServers: {} },
+    settingsPath: "/tmp/fake-settings.json",
+  };
+  const result = applyFix(diff, { execCommand: () => {}, writeFile: (p, c) => writes.push([p, c]) });
+  assert.equal(result.applied, true);
+  assert.equal(writes[0][0], "/tmp/fake-settings.json");
+  assert.match(writes[0][1], /"mcpServers"/);
+});
+
+test("applyFix for paste-type with claude-md destination writes to targetFile", () => {
+  const writes = [];
+  const diff = { kind: "paste", label: "x", destination: "claude-md", pasteText: "New rule.", targetFile: "/tmp/fake/CLAUDE.md" };
+  const result = applyFix(diff, { writeFile: (p, c) => writes.push([p, c]) });
+  assert.equal(result.applied, true);
+  assert.equal(writes[0][0], "/tmp/fake/CLAUDE.md");
+  assert.match(writes[0][1], /New rule\./);
+});
+
+test("applyFix for paste-type with session-opener destination never writes a file", () => {
+  const writes = [];
+  const diff = { kind: "paste", label: "x", destination: "session-opener", pasteText: "Paste me manually.", targetFile: null };
+  const result = applyFix(diff, { writeFile: (p, c) => writes.push([p, c]) });
+  assert.equal(result.applied, false);
+  assert.equal(result.reason, "session-opener has no file target — surfaced as text for manual paste");
+  assert.equal(writes.length, 0);
 });
