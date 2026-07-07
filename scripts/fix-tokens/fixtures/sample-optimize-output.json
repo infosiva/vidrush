@@ -1,0 +1,66 @@
+{
+  "period": { "label": "Last 30 days", "start": "2026-06-07T00:00:00.000Z", "end": "2026-07-07T23:59:59.999Z" },
+  "summary": {
+    "healthScore": 20,
+    "healthGrade": "F",
+    "findingCount": 4,
+    "periodCostUSD": 392.17673484,
+    "sessions": 216,
+    "calls": 8475,
+    "potentialSavingsTokens": 347160983,
+    "potentialSavingsCostUSD": 125.78509756697528,
+    "potentialSavingsPercent": 32.1
+  },
+  "findings": [
+    {
+      "title": "6 MCP servers configured but never used",
+      "explanation": "Never called in this period: playwright, hermes, nvidia-mcp, higgsfield, firecrawl, 21st-dev-magic.",
+      "severity": "high",
+      "trend": null,
+      "tokensSaved": 2592000,
+      "estimatedSavingsUSD": 0.9391463582000513,
+      "fix": {
+        "type": "command",
+        "label": "Remove unused servers:",
+        "text": "claude mcp remove playwright\nclaude mcp remove hermes\nclaude mcp remove nvidia-mcp\nclaude mcp remove higgsfield\nclaude mcp remove firecrawl\nclaude mcp remove 21st-dev-magic"
+      }
+    },
+    {
+      "title": "8 possibly low-worth expensive sessions",
+      "explanation": "Sessions with meaningful spend but weak delivery signals.",
+      "severity": "high",
+      "trend": null,
+      "tokensSaved": 179954593,
+      "estimatedSavingsUSD": 65.20204500668304,
+      "fix": {
+        "type": "paste",
+        "destination": "session-opener",
+        "label": "Paste at the start of your NEXT expensive thread (one-time, do not add to CLAUDE.md):",
+        "text": "Before continuing, name the deliverable in one sentence. Stop and check with me if (a) you spend more than 10 minutes without an edit, or (b) the same approach fails twice."
+      }
+    },
+    {
+      "title": "Claude edits more than it reads",
+      "explanation": "Claude made 607 reads and 381 edits (ratio 1.6:1). A healthy ratio is 4+ reads per edit.",
+      "severity": "high",
+      "trend": "active",
+      "tokensSaved": 550200,
+      "estimatedSavingsUSD": 0.19935120612718682,
+      "fix": {
+        "type": "paste",
+        "destination": "claude-md",
+        "label": "Add to your CLAUDE.md:",
+        "text": "Before editing any file, read it first. Before modifying a function, grep for all callers."
+      }
+    },
+    {
+      "title": "4 high-cost session outliers",
+      "explanation": "Sessions costing more than 2x their peer-session average in the same project.",
+      "severity": "high",
+      "trend": null,
+      "tokensSaved": 21689518,
+      "estimatedSavingsUSD": 7.85865425957348,
+      "fix": null
+    }
+  ]
+}
