@@ -1,117 +1,133 @@
-# AI Trace Advisor — Design Spec
+# AI Trace Fixer — Design Spec
 
 **Date:** 2026-07-07
-**Status:** APPROVED — ready for implementation plan
+**Status:** APPROVED — ready for implementation plan (supersedes earlier "AI Trace Advisor" dashboard draft below the fold)
 
 ## Problem
 
-Developers using Claude Code / Cursor burn tokens without visibility into waste patterns (repeated file reads, unbounded chat history, redundant subagent calls) until the bill or context limit hits. Existing tools (CodeBurn, ccusage, Claude-Code-Usage-Monitor) show *what was spent* after the fact. None of them tell you, automatically, *before you start working*, what to change.
+Token waste in Claude Code sessions is now diagnosable — CodeBurn's `optimize` command, installed and run locally 2026-07-07, produced a real report against this machine's history: **F grade (20/100), 199 sessions, $372.53 spent, ~$114.54 (31%) identified as recoverable**, across 12 findings (unused MCP servers loaded into every system prompt, low-delivery expensive sessions, context-heavy sessions with 100:1+ input-to-output ratios, and more).
 
-## Market context (researched 2026-07-07)
+The gap is not detection — CodeBurn already detects and explains well, for free, locally, with real numbers. The gap is **remediation**: every finding ends in a copy-paste command or a manual instruction. Nothing reads the diagnosis and safely applies the fix for you.
 
-- **CodeBurn** (`getagentseal/codeburn`) already ships: zero-SDK local `.jsonl` tailing across 31 tools (Claude Code, Cursor, Codex, Gemini, Grok), a macOS menu-bar app (SwiftBar), a localhost live dashboard, and an `optimize` command that retrospectively grades your setup and estimates savings. This is mature, free, open-source.
-- **ccusage**, **Claude-Code-Usage-Monitor**: CLI-only cost/token reports, narrower scope, no dashboard/menu-bar.
-- **Gap confirmed**: nothing fires automatically at session start, before the first prompt, to recommend specific token-saving tools/plugins based on recent history and project state. CodeBurn's `optimize` is the closest analog but is manual/on-demand, not hook-triggered.
+## Market context (researched + hands-on verified 2026-07-07)
 
-**Decision:** Build a full standalone product (own brand, own dashboard/menu-bar/pre-flight), accepting CodeBurn as an established competitor on 2 of 3 feature pillars. Differentiate by leading with the pre-flight advisor as the hero feature, and executing dashboard/menu-bar/retrospective to parity or better.
+- **CodeBurn** (`getagentseal/codeburn`, installed globally via `npm i -g codeburn`) ships: zero-SDK local `.jsonl` tailing across 31 tools, macOS menu-bar app (`codeburn menubar`, installed and running), localhost dashboard, `optimize` (diagnosis + estimated savings), `context` (per-session token breakdown), `yield` (spend vs shipped-code correlation), `compare`, `devices` (cross-machine), and an MCP server exposing usage data to agents. This is mature and does more than the original spec assumed — confirmed by running it directly, not just reading about it.
+- **ccusage** (also installed globally): CLI-only cost/token reports (`ccusage daily`, etc.), narrower, no dashboard.
+- **Verdict from hands-on use:** building a competing dashboard/menu-bar/SQLite store now would duplicate a tool that already works well on this machine's real data. That plan is abandoned.
+- **Confirmed open gap:** nothing takes a diagnosis (CodeBurn's or otherwise) and turns it into an applied, reviewable fix. Every existing tool stops at "here's the command to run" — the user still does the work.
 
-## Goals
+## Decision
 
-1. **Pre-flight advisor** — automatic recommendation at the start of every Claude Code session (SessionStart hook), before the user types a prompt, based on recent session history for the project.
-2. **Live dashboard** — localhost web app showing real-time token burn across Claude Code + Cursor sessions.
-3. **Menu-bar glance** — macOS menu-bar indicator for live burn rate, click-through to dashboard.
-4. **Retrospective report** — per-session waste score + specific fix + estimated savings, using the same rule engine as the pre-flight advisor.
+Pivot from "build our own monitoring dashboard" to **AI Trace Fixer**: a CLI/agent tool that consumes optimize-style findings and produces real diffs/actions the user reviews and approves — the step CodeBurn and every peer tool stops short of.
+
+## Goals (v1)
+
+1. **Ingest findings** — parse `codeburn optimize --format json` output (primary source; CodeBurn already computes this well, no need to re-derive it). Support a fallback light-parser of raw `.jsonl` history for the subset of checks needed if CodeBurn is ever unavailable, but do not duplicate its full engine.
+2. **Map findings to fixes** — for each fixable finding type, generate a concrete, inspectable change:
+   - Unused/low-coverage MCP servers → diff against `~/.claude/settings.json` removing or scoping the server entry (mirrors the `claude mcp remove` commands CodeBurn already prints, but applied as a reviewable diff rather than a command the user must run themselves)
+   - Bloated CLAUDE.md / repeated-instruction sections → proposed trimmed version with a diff, never silent rewrite
+   - Context-heavy session pattern (same file re-read, no `/clear` used, stale carryover) → proposed addition to project CLAUDE.md or a session-scoped reminder, e.g. "graphify-first" note already present in this repo's CLAUDE.md as a working example of the fix this tool would propose elsewhere
+   - Low-delivery expensive sessions → not auto-fixable (needs human judgment), so this finding type is surfaced as a flagged report only, never auto-actioned
+3. **Approval gate (hard requirement)** — every fix is shown as a diff first. Nothing is applied without explicit user confirmation. This follows the same irreversible-action discipline already in place for this environment (destructive/config-changing actions require confirmation).
+4. **Re-verify** — after applying approved fixes, re-run `codeburn optimize` and show the before/after health score delta, so the user sees the fix actually worked.
+5. **Lightweight SessionStart nudge** — a hook (same mechanism as the existing graphify/memory/caveman hooks already firing in this environment) that runs a **cheap, cached** check (not a full optimize scan every session) and prints one line if unapplied fixes exist: `"3 auto-fixable token-waste issues found — run 'aitrace fix' to review."` Full scans stay on-demand (`aitrace fix`), not on every session start, so it never adds latency.
 
 ## Non-goals (v1)
 
-- Browser-based AI (ChatGPT web, Claude.ai) capture via proxy/MITM
-- LLM-based waste explainer (rule engine only, deterministic)
-- Multi-machine / team aggregation
-- Auto-applying fixes (recommend only, never mutate user's config automatically)
-- Non-macOS platforms
-- Tools beyond Claude Code + Cursor in v1
+- Rebuilding a dashboard, menu-bar app, or SQLite event store — CodeBurn already covers this well; do not duplicate.
+- Re-implementing CodeBurn's full diagnostic engine — depend on its JSON output as the primary data source.
+- Auto-applying anything without a shown diff and explicit approval — no exceptions, matches this environment's standing rule on risky/irreversible actions.
+- Judgment calls on "was this session worth its cost" — surfaced as information only, never auto-actioned.
+- Non-macOS platforms, tools beyond what CodeBurn already covers.
+- Browser-based AI (ChatGPT web, Claude.ai) capture.
 
 ## Architecture
 
 ```
-┌─────────────────┐
-│ Log Watchers     │  chokidar tail on:
-│ (file tailers)   │  ~/.claude/projects/*/*.jsonl (Claude Code)
-└────────┬─────────┘  Cursor local session store
-         │ parsed events (tokens in/out, tool calls, file reads, timestamps)
-         ▼
-┌─────────────────┐
-│ SQLite store     │  local-only, append-only event log
-│ (better-sqlite3) │  no prompt content leaves the machine
-└────────┬─────────┘
-         │
-    ┌────┴──────────────┐
-    ▼                    ▼
-┌──────────────┐   ┌──────────────────┐
-│ Rule Engine   │──▶│ Plugin Catalog    │  curated table: graphify,
-│ (heuristics)  │   │ (JSON/TS table)   │  claude-mem, serena, /clear,
-└──────┬────────┘   └──────────────────┘  offset/limit reads, caching
-       │
-       ├──────────────────────┬─────────────────────┐
-       ▼                      ▼                      ▼
-┌─────────────┐      ┌────────────────┐      ┌───────────────┐
-│ SessionStart │      │ Localhost       │      │ Menu-bar       │
-│ hook script  │      │ dashboard        │      │ (SwiftBar-style│
-│ (pre-flight) │      │ (live + retro)   │      │ .1m.sh plugin) │
-└─────────────┘      └────────────────┘      └───────────────┘
+┌───────────────────┐
+│ codeburn optimize   │  existing tool, already installed,
+│ --format json       │  does the diagnosis — we don't rebuild this
+└─────────┬───────────┘
+          │ findings JSON
+          ▼
+┌───────────────────┐
+│ Finding Parser      │  normalizes CodeBurn's JSON into typed
+│                     │  Finding[] (category, evidence, fixability)
+└─────────┬───────────┘
+          ▼
+┌───────────────────┐      ┌──────────────────────┐
+│ Fix Generators      │─────▶│ Fixable finding types  │
+│ (one per category)  │      │ → diff generators       │
+└─────────┬───────────┘      └──────────────────────┘
+          ▼
+┌───────────────────┐
+│ Diff Presenter       │  shows unified diff per fix,
+│ + Approval Gate      │  waits for explicit y/n per fix
+└─────────┬───────────┘
+          ▼ (approved fixes only)
+┌───────────────────┐
+│ Applier              │  writes approved changes to
+│                     │  settings.json / CLAUDE.md / etc.
+└─────────┬───────────┘
+          ▼
+┌───────────────────┐
+│ Re-verify            │  re-runs codeburn optimize,
+│                     │  reports health-score delta
+└───────────────────┘
+
+┌───────────────────┐
+│ SessionStart hook    │  cheap cached check, one-line nudge,
+│ (separate, cron-like)│  never blocks, never runs full scan
+└───────────────────┘
 ```
 
 ## Components
 
-### 1. Log Watcher
-- Node/TS service using `chokidar` to tail `~/.claude/projects/*/*.jsonl` (append-only, one JSON object per line — same format the existing graphify/memory hooks already parse).
-- Cursor: locate its local session store (path TBD during implementation — investigate actual file location as first implementation step), parse equivalent fields.
-- Extracts: timestamp, project path, input/output/cached token counts, tool calls made, file paths read, subagent dispatches.
-- Writes normalized events to SQLite.
+### 1. Finding Parser
+- Shells out to `codeburn optimize --format json --period 30days`, parses into a typed `Finding` list: `{id, category, severity, evidence, estimatedSavings, fixable: boolean, suggestedCommand?: string}`.
+- Categories seen in real output (2026-07-07 run): unused/low-coverage MCP servers, low-delivery expensive sessions, context-heavy sessions. Fix generators are built per-category, starting with the ones confirmed fixable (MCP server removal, CLAUDE.md trims) and explicitly excluding judgment-based categories (low-delivery sessions).
 
-### 2. SQLite Store
-- Single local file, e.g. `~/.aitrace/store.db`.
-- Tables: `sessions`, `events` (one row per turn/tool-call), `waste_flags` (rule engine output, cached).
-- Append-only for events; waste_flags recomputed per session close.
+### 2. Fix Generators
+- **MCP server removal**: reads `~/.claude/settings.json`, for each low-coverage server CodeBurn flags, generates a diff removing or commenting out that server's entry. Never removes a server the user has referenced elsewhere without flagging the conflict first.
+- **CLAUDE.md trim**: detects duplicated/bloated instruction blocks (heuristic: near-identical paragraphs, or sections CodeBurn's context-heavy finding traces back to specific repeated content), proposes a condensed version as a diff.
+- **Context-heavy session guidance**: not a config change — proposes a one-line addition to the project's CLAUDE.md (e.g. a "read via graphify/serena first" reminder, following the exact pattern this repo's own CLAUDE.md already uses for graphify) when the pattern recurs across 3+ sessions for the same project.
+- Each generator is a pure function: `Finding → Diff | null` (null = not auto-fixable, surfaced as report-only).
 
-### 3. Rule Engine (v1 heuristics — deterministic, no LLM)
-| Pattern detected | Recommendation | Est. savings basis |
-|---|---|---|
-| Same file `Read` >2x in a session | Use graphify/serena symbol lookup instead of repeated full reads | % of tokens spent on repeat reads |
-| Session >N turns with no `/clear` and growing history | Enable claude-mem or manual `/clear` | % of tokens in resent history |
-| Full-file `Read` when a function/symbol was the actual target | Use offset+limit or serena `find_symbol` | tokens saved per avoided full read |
-| Repeated near-identical subagent dispatch (same description/prompt shape) | Cache/reuse prior agent result | tokens of duplicated dispatch |
-| High ratio of no-tool-use "conversation" turns vs tool-use turns | Tighten prompts / batch requests | est. from CodeBurn's published finding (56% waste case) as a directional benchmark, not copied logic |
+### 3. Diff Presenter + Approval Gate
+- CLI prints each proposed diff (unified diff format) one at a time with estimated savings attached.
+- Explicit per-fix approval (`y`/`n`/`a` for all remaining) — never a blanket "apply all" default.
+- Matches the standing rule in this environment: config/settings changes are the kind of action that needs confirmation, not silent execution.
 
-Each rule outputs: `{pattern, evidence (event ids), recommended_tool, estimated_savings_pct}`. Plugin catalog is a static TS/JSON table mapping recommended_tool → install/enable instructions.
+### 4. Applier
+- Only touches files for approved fixes.
+- Writes via the same Edit-style targeted change pattern used elsewhere in this codebase — full-file overwrite only when the whole file is being intentionally regenerated (e.g. a full CLAUDE.md rewrite), never a blind overwrite of an unreviewed diff.
 
-### 4. Pre-flight Advisor (hero feature)
-- Implemented as a `SessionStart` hook, wired into `~/.claude/settings.json` exactly like the existing graphify/memory/caveman hooks already firing in this environment.
-- On fire: queries SQLite for this project's last N sessions, runs rule engine if not already cached, prints a banner:
-  ```
-  === AI TRACE ADVISOR ===
-  Project: agents/kwizzo — last 3 sessions avg 40k tokens
-  Top waste: repeated reads of ConversationMode.tsx (6x) — 55% of turn cost
-  Recommendation: enable graphify query before Read on this file
-  === END ===
-  ```
-- Must be fast (<200ms) and fail silently if store is empty/missing — never block session start.
+### 5. Re-verify
+- Re-runs `codeburn optimize --format json` after applying fixes, diffs the health score/potential-savings numbers against the pre-fix run, reports the delta to the user.
 
-### 5. Localhost Dashboard
-- Next.js app (matches portfolio convention), `npm run dev` on a local port, reads SQLite directly (no auth needed — localhost only).
-- Views: live burn (current running sessions), session list with waste score, per-session retrospective detail (same rule engine output as pre-flight, rendered visually), plugin catalog reference page.
-
-### 6. Menu-bar App
-- SwiftBar-style approach (same mechanism CodeBurn uses) — a `.1m.sh` script SwiftBar polls every minute, no native Swift app needed for v1.
-- Shows current burn rate / today's token total, click opens dashboard in browser.
+### 6. SessionStart Nudge (lightweight, separate concern from the fixer)
+- Hook wired into `~/.claude/settings.json`, same mechanism as existing graphify/memory hooks.
+- Runs a cached check (last full scan's fixable-count, refreshed at most once/day, not per session) — prints a single line only if unresolved fixable findings exist.
+- Must fail silently and add negligible latency (<100ms) — it reads a small cache file, it does not shell out to `codeburn optimize` on every session start.
 
 ## Data flow & privacy
-Everything local. No prompt content or file contents leave the machine. SQLite lives in `~/.aitrace/`. No network calls except the dashboard serving to `localhost`.
+Everything local. Fix generation and diff review happen entirely on-machine. No prompt/file content leaves the machine. Depends on CodeBurn's local JSON output as input; no new telemetry.
 
 ## Testing
-- Unit tests for rule engine heuristics against fixture `.jsonl` transcripts (known waste patterns → expected recommendation output).
-- Manual verification: point watcher at real `~/.claude/projects/` history, confirm dashboard renders real sessions, confirm SessionStart hook fires correctly on next Claude Code session.
+- Unit tests per fix generator against fixture `Finding` objects (known input → expected diff, or `null` for non-fixable categories).
+- Integration test: run against this machine's real `codeburn optimize --format json` output, confirm findings parse, confirm at least the MCP-removal fix generates a correct diff against a sample `settings.json`.
+- Manual verification: approve one real fix (e.g. remove one confirmed-unused MCP server from this machine's own settings.json, with explicit user sign-off before doing so), re-run optimize, confirm health score improves.
 
 ## Open questions for implementation phase
-- Exact Cursor session log file location/format (needs investigation as step 1).
-- Whether SwiftBar itself needs to be a prerequisite install, or bundle an equivalent lightweight poller.
+- Exact JSON schema of `codeburn optimize --format json` output needs to be captured from a real run and documented (do this as implementation step 1, using the output already captured on 2026-07-07 as the reference fixture).
+- Whether CLAUDE.md trim fixes need a size/diff-risk threshold (e.g. refuse to auto-propose a trim >50% of file) to avoid overly aggressive rewrites.
+- Whether to also support ccusage as an alternate data source, or treat CodeBurn as the sole required dependency for v1 (leaning: CodeBurn only for v1, since it's the only one with a structured findings+fix-command output).
+
+---
+
+## Superseded draft (kept for reference, not implemented)
+
+The original plan below was to build a competing local dashboard (log watcher, SQLite store, live dashboard, menu-bar app, SessionStart pre-flight advisor). This was abandoned after hands-on testing showed CodeBurn already does this well. Kept here only so the earlier research/reasoning isn't lost.
+
+- Log Watcher (chokidar tail on Claude Code + Cursor logs) → SQLite store → Rule Engine (5 heuristics: repeated reads, no `/clear`, full-file reads, repeated subagent dispatch, low tool-use ratio) → SessionStart hook banner + Localhost Next.js dashboard + SwiftBar-style menu-bar app.
+- Abandoned because: CodeBurn already ships all of this, cross-tool, free, mature, verified working against real data on this machine.
