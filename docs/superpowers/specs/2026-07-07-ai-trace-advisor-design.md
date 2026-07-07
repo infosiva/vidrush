@@ -18,19 +18,26 @@ The gap is not detection — CodeBurn already detects and explains well, for fre
 
 ## Decision
 
-Pivot from "build our own monitoring dashboard" to **AI Trace Fixer**: a CLI/agent tool that consumes optimize-style findings and produces real diffs/actions the user reviews and approves — the step CodeBurn and every peer tool stops short of.
+Pivot from "build our own monitoring dashboard" to **AI Trace Fixer**: a Claude Code skill (`/fix-tokens`) that consumes CodeBurn's structured findings and produces real diffs/actions the user reviews and approves — the step CodeBurn and every peer tool stops short of.
+
+## Confirmed schema (captured 2026-07-07 from real `codeburn optimize --format json --period all` output, fixture saved at `/tmp/codeburn-optimize-full.json`)
+
+Each finding includes a `fix` object of one of two shapes:
+- `{type: "command", label, text}` — a shell command that would remediate the finding (e.g. `claude mcp remove <server>`, moving/archiving unused skill files)
+- `{type: "paste", destination, label, text}` — text meant to be pasted into a file (e.g. CLAUDE.md, shell rc file) — `destination` names the target file/section
+
+This means the fixer does not need to guess intent per finding category — it dispatches on `fix.type`:
+- `command` → show a before/after diff of the affected config (e.g. `settings.json` with the MCP entry removed) → run the command on approval
+- `paste` → show a diff of `destination` with `text` inserted → write the file on approval
 
 ## Goals (v1)
 
 1. **Ingest findings** — parse `codeburn optimize --format json` output (primary source; CodeBurn already computes this well, no need to re-derive it). Support a fallback light-parser of raw `.jsonl` history for the subset of checks needed if CodeBurn is ever unavailable, but do not duplicate its full engine.
-2. **Map findings to fixes** — for each fixable finding type, generate a concrete, inspectable change:
-   - Unused/low-coverage MCP servers → diff against `~/.claude/settings.json` removing or scoping the server entry (mirrors the `claude mcp remove` commands CodeBurn already prints, but applied as a reviewable diff rather than a command the user must run themselves)
-   - Bloated CLAUDE.md / repeated-instruction sections → proposed trimmed version with a diff, never silent rewrite
-   - Context-heavy session pattern (same file re-read, no `/clear` used, stale carryover) → proposed addition to project CLAUDE.md or a session-scoped reminder, e.g. "graphify-first" note already present in this repo's CLAUDE.md as a working example of the fix this tool would propose elsewhere
-   - Low-delivery expensive sessions → not auto-fixable (needs human judgment), so this finding type is surfaced as a flagged report only, never auto-actioned
-3. **Approval gate (hard requirement)** — every fix is shown as a diff first. Nothing is applied without explicit user confirmation. This follows the same irreversible-action discipline already in place for this environment (destructive/config-changing actions require confirmation).
+2. **Apply both fix types, same approval gate** — both `command` and `paste` findings are actioned by the fixer (not just one subset). Every finding CodeBurn can express as a fix gets a corresponding diff in our tool. Findings without a `fix` object (judgment calls, e.g. low-delivery expensive sessions) are surfaced as report-only, never auto-actioned.
+3. **Approval gate (hard requirement)** — every fix is shown as a diff first. Nothing is applied without explicit per-fix user confirmation (`y`/`n`/`a`-for-remaining). This follows the same irreversible-action discipline already in place for this environment (destructive/config-changing actions require confirmation).
 4. **Re-verify** — after applying approved fixes, re-run `codeburn optimize` and show the before/after health score delta, so the user sees the fix actually worked.
-5. **Lightweight SessionStart nudge** — a hook (same mechanism as the existing graphify/memory/caveman hooks already firing in this environment) that runs a **cheap, cached** check (not a full optimize scan every session) and prints one line if unapplied fixes exist: `"3 auto-fixable token-waste issues found — run 'aitrace fix' to review."` Full scans stay on-demand (`aitrace fix`), not on every session start, so it never adds latency.
+5. **Delivered as a Claude Code skill (`/fix-tokens`)** — not a standalone npm CLI. Fits the existing workflow (same pattern as other skills already invoked in this environment: `/review`, `/investigate`, etc.), no separate tool to remember, no extra install step beyond the skill file itself. Skill body: run `codeburn optimize --format json`, parse findings, walk the user through each fixable finding's diff, apply approved ones, re-verify, report score delta — all inline in the current session.
+6. **Lightweight SessionStart nudge (secondary, optional)** — a hook (same mechanism as the existing graphify/memory/caveman hooks already firing in this environment) that runs a **cheap, cached** check (not a full optimize scan every session) and prints one line if unapplied fixes exist: `"3 auto-fixable token-waste issues found — run /fix-tokens to review."` Full scans stay on-demand via the skill, not on every session start, so it never adds latency.
 
 ## Non-goals (v1)
 
@@ -119,9 +126,13 @@ Everything local. Fix generation and diff review happen entirely on-machine. No 
 - Manual verification: approve one real fix (e.g. remove one confirmed-unused MCP server from this machine's own settings.json, with explicit user sign-off before doing so), re-run optimize, confirm health score improves.
 
 ## Open questions for implementation phase
-- Exact JSON schema of `codeburn optimize --format json` output needs to be captured from a real run and documented (do this as implementation step 1, using the output already captured on 2026-07-07 as the reference fixture).
-- Whether CLAUDE.md trim fixes need a size/diff-risk threshold (e.g. refuse to auto-propose a trim >50% of file) to avoid overly aggressive rewrites.
-- Whether to also support ccusage as an alternate data source, or treat CodeBurn as the sole required dependency for v1 (leaning: CodeBurn only for v1, since it's the only one with a structured findings+fix-command output).
+- Whether CLAUDE.md/paste-type trim fixes need a size/diff-risk threshold (e.g. refuse to auto-propose a trim >50% of file) to avoid overly aggressive rewrites — resolve during implementation by capping proposed diffs and always requiring per-fix approval regardless of size.
+- Whether to also support ccusage as an alternate data source, or treat CodeBurn as the sole required dependency for v1 (leaning: CodeBurn only for v1, since it's the only one with a structured findings+fix-command output — schema now confirmed above).
+
+## Resolved (no longer open)
+- ~~JSON schema of `codeburn optimize --format json`~~ — captured and documented above from a real run against this machine's history.
+- ~~Which fix types v1 handles~~ — both `command` and `paste`, same approval-gated flow.
+- ~~Primary UX surface~~ — Claude Code skill (`/fix-tokens`), not a standalone CLI.
 
 ---
 
