@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { parseFindings, parseSummary } from "./parse-findings.mjs";
 import { generateFix } from "./fix-generators.mjs";
+import { renderDiff, promptApproval } from "./diff-presenter.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixture = JSON.parse(
@@ -80,4 +81,54 @@ test("generateFix for paste-type claude-md resolves targetFile from context", ()
   assert.equal(diff.destination, "claude-md");
   assert.equal(diff.targetFile, "/tmp/fake/CLAUDE.md");
   assert.match(diff.pasteText, /read it first/);
+});
+
+test("renderDiff for command-type shows label and command text", () => {
+  const diff = { kind: "command", label: "Remove unused servers:", commandText: "claude mcp remove playwright" };
+  const rendered = renderDiff(diff);
+  assert.match(rendered, /Remove unused servers:/);
+  assert.match(rendered, /claude mcp remove playwright/);
+});
+
+test("renderDiff for command-type with settings before/after shows +/- lines", () => {
+  const diff = {
+    kind: "command",
+    label: "Remove unused servers:",
+    commandText: "claude mcp remove playwright",
+    settingsBefore: { mcpServers: { playwright: {}, hermes: {} } },
+    settingsAfter: { mcpServers: { hermes: {} } },
+  };
+  const rendered = renderDiff(diff);
+  assert.match(rendered, /-\s*"playwright"/);
+});
+
+test("renderDiff for paste-type shows destination and paste text", () => {
+  const diff = { kind: "paste", label: "Add to your CLAUDE.md:", destination: "claude-md", pasteText: "Read before edit.", targetFile: "/tmp/CLAUDE.md" };
+  const rendered = renderDiff(diff);
+  assert.match(rendered, /\/tmp\/CLAUDE\.md/);
+  assert.match(rendered, /Read before edit\./);
+});
+
+test("promptApproval returns 'y' when reader yields 'y'", async () => {
+  const diff = { kind: "paste", label: "x", destination: "session-opener", pasteText: "x", targetFile: null };
+  const result = await promptApproval(diff, { readInput: async () => "y" });
+  assert.equal(result, "y");
+});
+
+test("promptApproval returns 'n' when reader yields 'n'", async () => {
+  const diff = { kind: "paste", label: "x", destination: "session-opener", pasteText: "x", targetFile: null };
+  const result = await promptApproval(diff, { readInput: async () => "n" });
+  assert.equal(result, "n");
+});
+
+test("promptApproval returns 'a' when reader yields 'a' (apply all remaining)", async () => {
+  const diff = { kind: "paste", label: "x", destination: "session-opener", pasteText: "x", targetFile: null };
+  const result = await promptApproval(diff, { readInput: async () => "a" });
+  assert.equal(result, "a");
+});
+
+test("promptApproval defaults to 'n' on unrecognized input (never silently applies)", async () => {
+  const diff = { kind: "paste", label: "x", destination: "session-opener", pasteText: "x", targetFile: null };
+  const result = await promptApproval(diff, { readInput: async () => "banana" });
+  assert.equal(result, "n");
 });
