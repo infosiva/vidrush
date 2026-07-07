@@ -1,5 +1,41 @@
 # agents/ — Project Standards
 
+## §0-TOOL-HYGIENE — CONNECT TOOLS ONLY WHEN NEEDED, QUICK CHECKUP EVERY SESSION (HARD RULE — added 2026-07-07, NO EXCEPTIONS)
+
+**Connect a tool (MCP server, plugin) only when a task actually needs it — not "just in case." Minimize token/cost waste from idle connected tools.**
+
+### Quick recurring checkup — do this regularly, not on a fixed calendar delay
+1. Run `codeburn optimize --period 30days` — check real usage per tool (fast, cheap, no reason to defer)
+2. Any tool at zero/near-zero use → disconnect it: `claude mcp remove <name> -s user` (and `-s local` if it also shows there)
+3. Before disconnecting anything tied into memory/session-load hooks (e.g. claude-mem) — check the hook files first, never remove blind
+4. Log what was removed in MEMORY.md (one line)
+5. Re-adding a removed tool later is quick and low-risk — leaving unused tools connected is the higher-cost default, always err toward disconnecting
+
+**Do this check often as a routine habit — start of a session, after wiring up any new tool, whenever things feel slow — not just once and forget.**
+
+## §0-TOKEN-FIX — RUN /fix-tokens ON A HARD CADENCE, NOT JUST ON DEMAND (HARD RULE — added 2026-07-07)
+
+**Token-waste remediation is now a standing rule, not a one-off tool.** CodeBurn diagnoses; `/fix-tokens` (this repo: `agents/scripts/fix-tokens/`) applies the fix under a diff+approval gate; both must be used routinely, not only when explicitly asked.
+
+### Mandatory cadence
+- **SessionStart hook** (`agents/hooks/token-fix-nudge.sh`, wired into `~/.claude/settings.json`) prints a one-line nudge whenever cached fixable-finding count > 0. This is a cheap, cached check (<100ms) — it does not run a full scan every session.
+- **Run `/fix-tokens` whenever the nudge fires.** Do not dismiss it repeatedly across sessions — treat 3+ consecutive nudges without running the skill as a violation of this rule.
+- **Run `/fix-tokens` proactively at the end of any multi-hour or multi-project session wave** (e.g. after a portfolio wave, after any session that touched 5+ projects), even without a nudge — these are exactly the sessions CodeBurn flags as context-heavy or low-delivery.
+- **Never auto-apply a fix without the diff+approval gate** — this tool follows the same irreversible-action discipline as the rest of this environment (see root-level Claude behavior: risky/config-changing actions require confirmation, never silent execution).
+
+### Complementary token tools — use frequently, not just this one
+- **ponytail mode** — apply its ladder (reuse > stdlib > native > existing dep > one-liner) on every task, not just when reminded. Standing behavioral rule, restated here so it's linked to the token-cost discipline this section establishes.
+- **RTK (Rust Token Killer)** — `rtk gain` / `rtk discover` — check periodically for missed token-saving opportunities in CLI usage (see `~/.claude/RTK.md`).
+- **graphify** — query the pre-built knowledge graph instead of grep/Read exploration (see root CLAUDE.md § graphify) — one of the largest token-saving levers already in place; keep using it first.
+- **CodeBurn `optimize`** — the sole diagnosis source for `/fix-tokens`; also usable standalone (`codeburn optimize --format json`) for a quick read without going through the full fix flow.
+
+### What NOT to do
+- Do not build a second/competing diagnosis engine — CodeBurn remains the sole data source (see `docs/superpowers/specs/2026-07-07-ai-trace-advisor-design.md`).
+- Do not skip the approval gate "because it's just a paste" or "just removing an unused MCP server" — every fix, regardless of perceived triviality, gets a diff and an explicit y/n.
+
+**Full spec:** `docs/superpowers/specs/2026-07-07-ai-trace-advisor-design.md`
+**Full plan:** `docs/superpowers/plans/2026-07-07-ai-trace-fixer.md`
+
 ## §0-PUBLIC-APIS — FREE API LIBRARY (HARD RULE — CHECK BEFORE ADDING ANY DATA FEATURE)
 
 **Repo cloned at:** `/Users/sivaprakasam/projects/agents/public-apis/` (1631 free APIs, 40+ categories)
@@ -952,7 +988,9 @@ This sequence is non-negotiable. "I'll check later" = violation.
 **Every UI change must use the design system pipeline. Violation = redo the work.**
 
 #### Pipeline (fires on every project touch — no exceptions)
-1. `/design-shotgun` — 3 directions, pick furthest from existing portfolio
+0. `/taste-skill` — DEFAULT FIRST STEP on every UI task. Quality gate before any design work. Anti-slop taste check. If existing design: audit it. If new: sets the taste bar.
+0b. `/imagegen-frontend-web` — before generating ANY web UI image. Crafts the taste-aware prompt. Then pipe to `/image-gen` (fal.ai). Mobile images: `/imagegen-frontend-mobile` instead.
+1. `/redesign-skill` (if redesigning existing landing) OR `/design-shotgun` (if new) — 3 directions, pick furthest from portfolio
 2. `/design-html` — Claude canvas generates production HTML + Tailwind
 3. `/ui-ux-pro-max` — premium quality pass (layout, spacing, hierarchy)
 4. `/21st-registry` — pull polished components before hand-rolling (buttons, cards, forms, pricing). **MCP wired 2026-06-17**: `mcp__21st-dev-magic__*` tools live via `21st-dev-magic` server in `~/.claude/settings.json` (key in `.env.shared` as `TWENTYFIRST_API_KEY`) — call the MCP tool directly for real component code, don't just reference the skill name in a prompt.
