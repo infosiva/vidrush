@@ -7,6 +7,7 @@ import { parseFindings, parseSummary } from "./parse-findings.mjs";
 import { generateFix } from "./fix-generators.mjs";
 import { renderDiff, promptApproval } from "./diff-presenter.mjs";
 import { applyFix } from "./applier.mjs";
+import { computeDelta, runReverify } from "./reverify.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const fixture = JSON.parse(
@@ -173,4 +174,20 @@ test("applyFix for paste-type with session-opener destination never writes a fil
   assert.equal(result.applied, false);
   assert.equal(result.reason, "session-opener has no file target — surfaced as text for manual paste");
   assert.equal(writes.length, 0);
+});
+
+test("computeDelta returns positive healthScoreDelta when score improves", () => {
+  const before = { healthScore: 20, healthGrade: "F", findingCount: 4, potentialSavingsCostUSD: 125.78, potentialSavingsPercent: 32.1 };
+  const after = { healthScore: 35, healthGrade: "F", findingCount: 3, potentialSavingsCostUSD: 90.0, potentialSavingsPercent: 22.4 };
+  const delta = computeDelta(before, after);
+  assert.equal(delta.healthScoreDelta, 15);
+  assert.equal(delta.findingCountDelta, -1);
+  assert.ok(delta.savingsCostDelta < 0); // savings opportunity shrank because we fixed things
+});
+
+test("runReverify parses the output of the injected execOptimize function", () => {
+  const fakeOutput = JSON.stringify(fixture);
+  const result = runReverify({ execOptimize: () => fakeOutput });
+  assert.equal(result.summary.healthScore, 20);
+  assert.equal(result.summary.findingCount, 4);
 });
