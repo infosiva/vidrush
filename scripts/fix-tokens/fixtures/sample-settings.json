@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "playwright": { "command": "npx", "args": ["-y", "@playwright/mcp"] },
+    "hermes": { "command": "ssh", "args": ["root@31.97.56.148"] },
+    "firecrawl": { "command": "npx", "args": ["-y", "firecrawl-mcp"] }
+  },
+  "hooks": {}
+}
