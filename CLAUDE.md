@@ -158,6 +158,36 @@ background: 'rgba(99,102,241,0.22)',  // was 0.10
 
 ---
 
+## §0-UI-QUALITY-GATE — `/ui-ux-pro-max` + PLAYWRIGHT CLI MANDATORY ON EVERY PROJECT TOUCH (HARD RULE — NO EXCEPTIONS, PERMANENT, added 2026-07-08)
+
+**`/ui-ux-pro-max` is not one optional step in a longer pipeline — it is a standalone mandatory gate, same enforcement class as `§0-VISUAL-QA`. No UI/layout/component touch ships without it.**
+
+### Mandatory sequence, every UI touch (new project, redesign, or single-component edit)
+1. `/ui-ux-pro-max` — run BEFORE writing/editing any layout, hero, or component. Quality pass on hierarchy, spacing, type scale, motion, accessibility.
+2. Layer these on top, in order, before implementation is considered done:
+   - `/taste-skill` — anti-slop quality gate (does this look premium, or generic?)
+   - `/21st-registry` — pull polished components instead of hand-rolling
+   - Matching Open Design skill (`/frontend-design`, `/interface-design`, `/shadcn-ui`, `/theme-factory` — pick per `~/.claude/CLAUDE.md` § UI Design PRIMARY TOOL SELECTION table)
+   - `/emil-design-eng` — polish pass (spacing, micro-interactions)
+   - `/animate` — motion, easing, spring physics
+   - `/fixing-accessibility` — WCAG audit
+3. **Playwright CLI verification — mandatory, not optional:**
+   ```bash
+   npx playwright screenshot --browser chromium --viewport-size 1280,800 <url> /tmp/<project>-desktop.png
+   npx playwright screenshot --browser chromium --viewport-size 375,812 <url> /tmp/<project>-mobile.png
+   node agents/scripts/visual-qa.mjs --project <name>   # contrast/overflow/H1 gate, §0-VISUAL-QA
+   ```
+   Read both screenshots. `/ui-ux-pro-max` output is not verified until screenshots are actually read and confirmed matching.
+4. Only after steps 1–3 pass → implementation is "done." A component built without running `/ui-ux-pro-max` first, or shipped without the Playwright screenshot check, is incomplete work — redo it, don't patch around it.
+
+### Auto-trigger
+Fires on: any `app/page.tsx`/`app/layout.tsx` touch, any new component, any "make it look better"/"polish"/"redesign" request, any new project scaffold. Same trigger list as `§0-DESIGN-PIPELINE` — this gate runs alongside it, not instead of it.
+
+### Why standalone (not just step 3 of the design pipeline)
+`§0-DESIGN-PIPELINE` governs full project builds (16 steps). This gate exists so that even a **single-component edit** — not a full project touch — still gets the quality-pass + Playwright-verify discipline. A one-line button-color change doesn't need all 16 steps; it still needs `/ui-ux-pro-max` + a screenshot check before it's called done.
+
+---
+
 ## §0-VERCEL — WHICH PROJECT GOES WHERE (HARD RULE — NO EXCEPTIONS, PERMANENT)
 
 **This rule exists because 8 old projects were accidentally relinked to sivaprakasam, making them unreachable for weeks.**
