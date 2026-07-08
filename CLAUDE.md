@@ -158,6 +158,43 @@ background: 'rgba(99,102,241,0.22)',  // was 0.10
 
 ---
 
+## §0-BG-CONTRAST — EVERY DARK-THEME COMPONENT MUST SET ITS OWN BACKGROUND (HARD RULE — NO EXCEPTIONS, PERMANENT, added 2026-07-08)
+
+**Root cause pattern, confirmed recurring on speakiq.app across 2+ separate incidents (SampleLesson section on landing page, then `/converse` page — same bug, different files, both reported by user, both had shipped "fixed" before and recurred): a component is written entirely with dark-theme styling (`text-white`, `bg-white/[0.0X]`, `border-white/10`, `rgba(255,255,255,*)`) but the component/page root never sets an explicit `background`. It silently inherits whatever the parent/body background happens to be. If that inherited bg is light, every string of text and card in the component goes near-invisible — and `§0-VISUAL-QA`'s existing check only screenshots the landing-page fold, so it never caught this on secondary routes (`/converse`) or below-the-fold sections.**
+
+### The rule
+Any component/page file that uses `text-white`, `text-white/*`, `rgba(255,255,255,*)` as a **primary** text/border color MUST also explicitly set its own `background` (not rely on inheritance) — either on its own root element or via a wrapping element it controls. Never assume a dark ancestor exists.
+
+### Applies globally — every project, not just speakiq
+This is not a speakiq-only fix. Grep every project for the same pattern before considering any project "done":
+```bash
+# Per project — find components styled dark-only with no local background set:
+grep -rLZ "background" $(grep -rl "text-white\|rgba(255,255,255" --include="*.tsx" src/ app/ 2>/dev/null) 2>/dev/null | tr '\0' '\n'
+```
+Any file returned = a component assuming a dark ancestor without setting one — audit and fix.
+
+### Fix pattern (canonical, copy this shape)
+```typescript
+// Root of any dark-styled section/page:
+<section style={{
+  background: 'linear-gradient(180deg, #0d0b1e 0%, #120f2a 100%)', // own explicit dark bg
+  // ...existing padding/layout
+}}>
+  {/* existing text-white / rgba(255,255,255,*) children now actually visible */}
+</section>
+```
+Prefer reusing the project's own hero gradient/token (grep `globals.css` / hero component for the exact stops already in use) over inventing a new flat color — the fixed section should read as a continuation of the theme, not a mismatched patch.
+
+### Coverage gap this closes in §0-VISUAL-QA
+`§0-VISUAL-QA`'s Playwright gate only screenshots the landing page (`/`) above-the-fold. This rule requires manually auditing (grep above) **every route and every below-the-fold section** for the same inherited-background assumption — landing page mid-scroll sections, `/converse`, `/dashboard`, `/app`, any secondary route. Do this audit on every project touch, not just when a user reports a visible bug.
+
+### Auto-trigger
+- Any project touch (per `§0-DESIGN-PIPELINE` / `§0-UI-QUALITY-GATE`) → run the grep above across the whole project, not just the file being edited
+- Any user report of "text invisible" / "can't read this" / "never been corrected" → assume this exact pattern first, check ALL routes for the same bug (it is never isolated to one file — verified twice now on speakiq alone)
+- After fixing → re-screenshot the SPECIFIC route/scroll-position that was broken (not just `/`), at both 375px and 1280px, before considering it resolved
+
+---
+
 ## §0-UI-QUALITY-GATE — `/ui-ux-pro-max` + PLAYWRIGHT CLI MANDATORY ON EVERY PROJECT TOUCH (HARD RULE — NO EXCEPTIONS, PERMANENT, added 2026-07-08)
 
 **`/ui-ux-pro-max` is not one optional step in a longer pipeline — it is a standalone mandatory gate, same enforcement class as `§0-VISUAL-QA`. No UI/layout/component touch ships without it.**
