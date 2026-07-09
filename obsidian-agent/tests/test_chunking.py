@@ -31,3 +31,9 @@ def test_frontmatter_not_in_chunk_text():
     chunks = chunk_note(Path("/vault/fm.md"), text)
     assert "tags:" not in chunks[0]["text"]
     assert chunks[0]["tags"] == ["a", "b"]
+
+def test_blank_tags_frontmatter_chunks_with_empty_list():
+    text = "---\ntags:\n---\n\nBody with blank tags key."
+    chunks = chunk_note(Path("/vault/blank-tags.md"), text)
+    assert len(chunks) == 1
+    assert chunks[0]["tags"] == []

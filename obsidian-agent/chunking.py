@@ -36,7 +36,7 @@ def _split_by_heading(body: str) -> list[tuple[str | None, str]]:
 
 def chunk_note(file_path: Path, raw_text: str) -> list[dict]:
     post = frontmatter.loads(raw_text)
-    tags = post.metadata.get("tags", [])
+    tags = post.metadata.get("tags") or []
     if isinstance(tags, str):
         tags = [tags]
     body = post.content.strip()

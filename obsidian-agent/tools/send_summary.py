@@ -26,7 +26,7 @@ def _note_tags(f: Path) -> list[str]:
     # ponytail: reuse chunking.py's frontmatter.loads pattern instead of a
     # second YAML/regex parser — same lightweight approach, one dependency.
     post = frontmatter.loads(f.read_text(encoding="utf-8"))
-    tags = post.metadata.get("tags", [])
+    tags = post.metadata.get("tags") or []
     return [tags] if isinstance(tags, str) else tags
 
 

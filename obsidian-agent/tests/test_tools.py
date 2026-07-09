@@ -70,3 +70,24 @@ def test_send_summary_respects_tag_filter(tmp_path):
     sent_prompt = fake_claude.messages.create.call_args.kwargs["messages"][0]["content"]
     assert "Work content XYZ" in sent_prompt
     assert "Personal content ABC" not in sent_prompt
+
+
+def test_send_summary_blank_tags_note_excluded_not_crashed(tmp_path):
+    blank_note = tmp_path / "blank-tags-note.md"
+    blank_note.write_text("---\ntags:\n---\n\nBlank tags content.", encoding="utf-8")
+    work_note = tmp_path / "work-note.md"
+    work_note.write_text("---\ntags: [work]\n---\n\nWork content XYZ.", encoding="utf-8")
+
+    fake_claude = MagicMock()
+    fake_claude.messages.create.return_value = MagicMock(
+        content=[MagicMock(text="summary")]
+    )
+
+    with patch("tools.send_summary._notes_in_period", return_value=[blank_note, work_note]), \
+         patch("tools.send_summary.config.VAULT_PATH", tmp_path):
+        result = send_summary.run(period="week", tag_filter="work", claude_client=fake_claude)
+
+    assert result["status"] == "ok"
+    sent_prompt = fake_claude.messages.create.call_args.kwargs["messages"][0]["content"]
+    assert "Work content XYZ" in sent_prompt
+    assert "Blank tags content" not in sent_prompt
