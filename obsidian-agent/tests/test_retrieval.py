@@ -67,29 +67,39 @@ def test_search_tag_filter_matches_multi_tag_note():
 
 
 class FakeWindowedTagCollection:
-    """Simulates a vault where the first (small) fetch window contains no
-    tag-matching notes, but a wider fetch surfaces enough. Responds
-    differently based on n_results to mimic Chroma returning more
-    candidates when asked for a bigger window."""
+    """Simulates a vault where tag-matching notes rank deeper than the first
+    fetch window, so `.query()` must genuinely be asked for a wider window
+    (a bigger `n_results`) before it will surface enough of them. Tracks
+    every `n_results` it was called with in `self.calls`, so tests can
+    assert on the actual sequence of fetch-window sizes `search()` used —
+    proving multiple rounds happened, not just checking final output.
 
-    def __init__(self, total_matching: int):
-        # 3 non-matching notes rank closest, then `total_matching` tagged
-        # notes rank further out (all within a 20-item collection).
+    Layout: the first `non_matching` ids (ranked closest) never carry the
+    tag. `total_matching` tag-matching ids rank right after them. A window
+    smaller than `non_matching + top_k` matches will therefore return fewer
+    than `top_k` tag hits, forcing the loop in `search()` to double
+    `fetch_n` and retry.
+    """
+
+    def __init__(self, total_matching: int, non_matching: int = 30, collection_size: int = 200):
         self.total_matching = total_matching
-        self.collection_size = 20
+        self.non_matching = non_matching
+        self.collection_size = collection_size
+        self.calls: list[int] = []
 
     def query(self, query_embeddings, n_results, where=None):
+        self.calls.append(n_results)
         n = min(n_results, self.collection_size)
         ids, documents, distances, metadatas = [], [], [], []
         for i in range(n):
-            if i < 3:
+            if i < self.non_matching:
                 # closest-ranked, non-matching
                 ids.append(f"near{i}")
                 documents.append(f"Unrelated note {i}")
-                distances.append(0.1 + i * 0.01)
+                distances.append(0.1 + i * 0.001)
                 metadatas.append({"file_path": f"/vault/near{i}.md", "title": f"near{i}", "heading": "", "tags": "personal"})
             else:
-                match_idx = i - 3
+                match_idx = i - self.non_matching
                 if match_idx >= self.total_matching:
                     break
                 ids.append(f"work{match_idx}")
@@ -105,28 +115,51 @@ class FakeWindowedTagCollection:
 
 
 def test_search_tag_filter_expands_fetch_when_first_window_is_short():
-    # top_k=5 -> first fetch_n = 25, capped to collection_size=20.
-    # Reproduces the reviewer's exact bug scenario: with the OLD fixed 5x
-    # fetch and no expansion loop, a first small window could return fewer
-    # than top_k tag matches even though more exist deeper in the collection.
-    # Here 6 "work" notes exist total but only within a window Chroma serves
-    # once asked wide enough — the fix must actually reach top_k=5.
+    # 30 non-matching notes rank closest, then 6 "work" notes rank right
+    # after them, inside a 200-item collection. top_k=5 -> first fetch_n =
+    # 25: window [0:25) is entirely non-matching (0 tag hits), so the OLD
+    # fixed-fetch code (no expansion loop) would return 0 results here even
+    # though matches exist. The fix must double fetch_n (25 -> 50) and
+    # retry: window [0:50) covers all 30 non-matching + all 6 matching, so
+    # round 2 succeeds.
+    coll = FakeWindowedTagCollection(total_matching=6)
     with patch("retrieval.embed_text", return_value=[0.1, 0.2]), \
-         patch("retrieval.get_chroma_collection", return_value=FakeWindowedTagCollection(total_matching=6)):
+         patch("retrieval.get_chroma_collection", return_value=coll):
         results = search("test query", top_k=5, tag_filter="work")
 
     assert len(results) == 5
     assert all(r["tags"] == ["work"] for r in results)
 
+    # Prove multiple rounds genuinely happened: more than one call, and
+    # n_results strictly increased each round (the doubling behavior).
+    assert len(coll.calls) > 1
+    assert coll.calls == sorted(coll.calls)
+    assert coll.calls[0] < coll.calls[1]
+    assert coll.calls[0] == 25  # top_k * 5
+
 
 def test_search_tag_filter_stops_short_when_collection_exhausted():
-    # Only 2 "work" notes exist in the whole (small) collection. The loop
-    # must stop once Chroma returns fewer raw ids than requested (collection
-    # exhausted) instead of re-querying forever, and correctly return the
-    # genuinely-available 2 results rather than top_k=5.
+    # Only 2 "work" notes exist in the whole collection (32 items total:
+    # 30 non-matching + 2 matching). Once fetch_n grows past 32, Chroma
+    # returns fewer raw ids than requested (collection genuinely
+    # exhausted) — the loop must stop right there instead of continuing to
+    # double and re-query, and return the 2 genuinely-available matches
+    # rather than top_k=5.
+    coll = FakeWindowedTagCollection(total_matching=2, collection_size=32)
     with patch("retrieval.embed_text", return_value=[0.1, 0.2]), \
-         patch("retrieval.get_chroma_collection", return_value=FakeWindowedTagCollection(total_matching=2)):
+         patch("retrieval.get_chroma_collection", return_value=coll):
         results = search("test query", top_k=5, tag_filter="work")
 
     assert len(results) == 2
     assert all(r["tags"] == ["work"] for r in results)
+
+    # The collection is exhausted (32 items) once fetch_n reaches 40
+    # (25 -> 40 after one doubling... actually 25 -> 50, clamped to 32 raw
+    # ids returned, which is < the requested 50 -> loop must stop there).
+    # Assert it didn't keep re-querying beyond the round where exhaustion
+    # was first signaled (len(ids) < fetch_n).
+    assert coll.calls[0] == 25
+    last_call_n_results = coll.calls[-1]
+    assert last_call_n_results > coll.collection_size
+    # No call after the exhausting one — exactly one call past round 1.
+    assert len(coll.calls) == 2
