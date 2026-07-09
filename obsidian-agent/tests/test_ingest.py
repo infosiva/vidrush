@@ -1,8 +1,10 @@
 # obsidian-agent/tests/test_ingest.py
 from pathlib import Path
+from unittest.mock import patch
 import sys
 sys.path.insert(0, str(Path(__file__).parent.parent))
-from ingest import walk_vault
+import pytest
+from ingest import walk_vault, embed_text
 
 def test_walk_vault_finds_markdown_only(tmp_path):
     (tmp_path / "note1.md").write_text("# Note 1")
@@ -23,3 +25,8 @@ def test_walk_vault_skips_dotdirs(tmp_path):
     files = walk_vault(tmp_path)
     assert len(files) == 1
     assert files[0].name == "real.md"
+
+def test_embed_text_raises_runtime_error_when_ollama_unreachable():
+    with patch("ollama.Client.embeddings", side_effect=ConnectionError("connection refused")):
+        with pytest.raises(RuntimeError, match="ollama serve"):
+            embed_text("some text")
