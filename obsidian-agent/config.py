@@ -1,0 +1,19 @@
+# obsidian-agent/config.py
+import os
+from pathlib import Path
+
+VAULT_PATH = Path(os.environ.get("OBSIDIAN_VAULT_PATH", "/Users/sivaprakasam/Obsidian/ClaudeVault"))
+OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+EMBED_MODEL = os.environ.get("EMBED_MODEL", "nomic-embed-text")
+CLAUDE_MODEL = os.environ.get("CLAUDE_MODEL", "claude-sonnet-5")
+CHROMA_DB_PATH = Path(os.environ.get("CHROMA_DB_PATH", str(Path(__file__).parent / ".chroma")))
+CHROMA_COLLECTION = "obsidian_notes"
+
+CHUNK_TOKEN_THRESHOLD = 500
+MAX_TOOL_ITERATIONS = 5
+AGENT_CREATED_SUBDIR = "_agent-created"
+DEFAULT_TOP_K = 5
+
+ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
+if not ANTHROPIC_API_KEY:
+    print("[config] WARNING: ANTHROPIC_API_KEY not set — agent.py will fail at first API call")
