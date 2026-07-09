@@ -15,5 +15,6 @@ AGENT_CREATED_SUBDIR = "_agent-created"
 DEFAULT_TOP_K = 5
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
-if not ANTHROPIC_API_KEY:
-    print("[config] WARNING: ANTHROPIC_API_KEY not set — agent.py will fail at first API call")
+# Fail-loud enforcement lives in agent.py (run_turn), where the key is actually
+# consumed to construct the anthropic.Anthropic client — not here at import time,
+# since other modules import this file for unrelated constants.
