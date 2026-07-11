@@ -1,0 +1,15 @@
+[
+  {"query": "What have I written about Vercel account setup?", "expected_tool": "search_notes", "expected_behavior": "Answers grounded in retrieved notes, cites a source file", "category": "retrieval"},
+  {"query": "Summarize what I did this week", "expected_tool": "send_summary", "expected_behavior": "Calls send_summary with period=week, returns a digest", "category": "summary"},
+  {"query": "Create a note titled 'Test Idea' with content 'Try X next week'", "expected_tool": "create_note", "expected_behavior": "Calls create_note, confirms file written to _agent-created", "category": "write"},
+  {"query": "What did I write about my pet dragon's birthday party on Mars?", "expected_tool": "search_notes", "expected_behavior": "no_results returned, agent says it found nothing rather than inventing an answer", "category": "no_results"},
+  {"query": "What's 17 * 4?", "expected_tool": null, "expected_behavior": "Answers directly without calling any tool", "category": "no_tool_needed"},
+  {"query": "Summarize my notes from the last month about design system decisions", "expected_tool": "send_summary", "expected_behavior": "Calls send_summary with period=month", "category": "summary"},
+  {"query": "Search my notes for anything tagged 'security'", "expected_tool": "search_notes", "expected_behavior": "Calls search_notes with tag_filter=security", "category": "retrieval"},
+  {"query": "Make a note called 'Groceries' listing milk, eggs, bread", "expected_tool": "create_note", "expected_behavior": "Creates note, does not overwrite any existing file", "category": "write"},
+  {"query": "What's the capital of France?", "expected_tool": null, "expected_behavior": "Answers directly, general knowledge not vault-dependent", "category": "no_tool_needed"},
+  {"query": "What did I decide about the Vercel account split between infosiva and sivaprakasam?", "expected_tool": "search_notes", "expected_behavior": "Retrieves grounded answer citing the actual decision from notes", "category": "retrieval"},
+  {"query": "How's the weather today?", "expected_tool": null, "expected_behavior": "Agent explains it has no weather tool/data rather than guessing", "category": "out_of_scope"},
+  {"query": "Summarize today's notes", "expected_tool": "send_summary", "expected_behavior": "Calls send_summary with period=day; if nothing modified today, honest no_results response", "category": "summary"},
+  {"query": "Find notes about a topic that doesn't exist, like 'underwater basket weaving techniques'", "expected_tool": "search_notes", "expected_behavior": "no_results, agent does not fabricate content", "category": "no_results"}
+]
