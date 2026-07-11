@@ -90,8 +90,13 @@ def run_turn(user_message: str, history: list[dict] | None = None, claude_client
         capped = True
 
     if capped:
+        capped_text = "Reached max tool-call iterations — capped to avoid a runaway loop. Partial results above."
+        # messages currently ends with a tool_result (role=user); append a synthetic
+        # assistant turn so history always ends assistant-side and stays valid for
+        # the next run_turn call (Anthropic rejects two consecutive user messages).
+        messages.append({"role": "assistant", "content": capped_text})
         return {
-            "response": "Reached max tool-call iterations — capped to avoid a runaway loop. Partial results above.",
+            "response": capped_text,
             "tool_calls": tool_calls,
             "history": messages,
         }

@@ -5,7 +5,6 @@ import frontmatter
 
 import config
 from ingest import walk_vault
-from retrieval import search
 
 PERIOD_DAYS = {"day": 1, "week": 7, "month": 30}
 

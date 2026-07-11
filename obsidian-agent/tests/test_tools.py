@@ -46,8 +46,7 @@ def test_create_note_collision_appends_suffix(tmp_path):
 
 
 def test_send_summary_no_notes_in_period(tmp_path):
-    with patch("tools.send_summary.search", return_value=[]), \
-         patch("tools.send_summary._notes_in_period", return_value=[]):
+    with patch("tools.send_summary._notes_in_period", return_value=[]):
         result = send_summary.run(period="week")
     assert result["status"] == "no_results"
 
