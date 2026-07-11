@@ -1,5 +1,5 @@
 # HANDOFF — RenewalPilot MVP build
-**Date:** 2026-07-09  **Status:** IN PROGRESS
+**Date:** 2026-07-11  **Status:** COMPLETE — live at https://renewalpilot.vercel.app
 **Goal:** Weekend micro-SaaS: contract renewal tracker. Manual entry + Claude-parsed contract text, dashboard sorted by urgency, Stripe pay-to-unlock unlimited contracts + email reminders.
 
 ## Context
@@ -38,8 +38,11 @@ Google Business Profile / Yelp review-reply APIs both blocked (partner-gated, we
 - [x] Landing page: pitch + inline tool (try-before-signup parse demo, per §T)
 - [ ] Email reminder: DEFERRED to v2 — documented as stubbed in README, not built (time-constrained weekend scope call)
 - [x] npm run build — zero errors (fixed Prisma 7 driver-adapter requirement + Turbopack workspace-root warning along the way)
-- [ ] Deploy to Vercel (sivaprakasam account per §U — this is a NEW project)
+- [x] Deploy to Vercel (sivaprakasam account per §U — verified orgId team_o4yd8mPfnYYzbpPwlbdxNnWE)
 - [x] README.md written (stubbed vs real, breaks-at-100-users, first-10-users channel)
+- [x] Chatbot: `app/api/chat/route.ts` (Groq 70b→8b fallback, 60/hr) + `FloatingChatWrapper` in layout (§Z5 gap found by e2e-verify, fixed)
+- [x] Feedback: `app/api/feedback/route.ts` + `FeedbackWidget` in layout (§Z5 gap found by e2e-verify, fixed)
+- [x] §Z9 e2e-verify against live URL — 10/10 pass
 
 ## Blockers found during build (not yet resolved)
 - **ANTHROPIC_API_KEY in agents/.env.shared is rejected by Anthropic** (`invalid x-api-key`, confirmed via direct curl to api.anthropic.com). User chose to continue building and fix this before launch rather than block now. Need a fresh key before parse feature works, local or live.
@@ -54,4 +57,10 @@ Google Business Profile / Yelp review-reply APIs both blocked (partner-gated, we
 - Deployed, live URL reachable
 
 ## Resume from here if interrupted
-Not yet started — about to scaffold Next.js app.
+Done. Live at https://renewalpilot.vercel.app, deployed under sivaprakasam Vercel account, e2e-verify 10/10.
+
+Remaining known gaps (not blocking, deferred by explicit user choice):
+- SQLite on Vercel serverless filesystem won't persist real user data — migrate to Neon/Supabase Postgres via `@prisma/adapter-neon` before sharing with real users.
+- ANTHROPIC_API_KEY in `.env.shared` is invalid — parse-contract feature will fail until a working key is set.
+- Stripe keys unset — checkout returns graceful 503 until STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET / STRIPE_PRICE_ID are configured.
+- Email reminders deferred to v2.
