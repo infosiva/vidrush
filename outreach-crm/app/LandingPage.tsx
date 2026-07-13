@@ -48,19 +48,19 @@ const EASE = [0.23, 1, 0.32, 1] as const
 
 export default function LandingPage() {
   return (
-    <div style={{ minHeight: '100vh', background: '#080c14', color: '#e2e4f0', fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ minHeight: '100vh', background: '#0b0f1a', color: '#e2e4f0', fontFamily: 'system-ui, sans-serif' }}>
 
       {/* Ambient glow */}
       <div aria-hidden style={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
         <div style={{
           position: 'absolute', width: 700, height: 700, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(99,102,241,0.10) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(129,140,248,0.10) 0%, transparent 70%)',
           top: '-15%', left: '-10%',
           animation: 'blob1 22s ease-in-out infinite',
         }} />
         <div style={{
           position: 'absolute', width: 500, height: 500, borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(129,140,248,0.07) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(165,180,252,0.07) 0%, transparent 70%)',
           bottom: '5%', right: '-5%',
           animation: 'blob2 28s ease-in-out infinite',
         }} />
@@ -70,12 +70,12 @@ export default function LandingPage() {
       <nav style={{
         position: 'sticky', top: 0, zIndex: 50,
         background: 'rgba(8,12,20,0.85)', backdropFilter: 'blur(16px)',
-        borderBottom: '1px solid rgba(99,102,241,0.12)',
+        borderBottom: '1px solid rgba(129,140,248,0.12)',
         padding: '0 24px', height: 54,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
       }}>
         <div style={{ fontWeight: 900, fontSize: 17, letterSpacing: '-0.02em', color: '#e2e4f0' }}>
-          Outreach<span style={{ color: '#6366f1' }}>CRM</span>
+          Outreach<span style={{ color: '#818cf8' }}>CRM</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <Link href="/login" style={{ fontSize: 13, color: 'rgba(255,255,255,0.45)', textDecoration: 'none', fontWeight: 500 }}>
@@ -85,12 +85,12 @@ export default function LandingPage() {
             href="/login"
             style={{
               padding: '7px 16px', borderRadius: 9,
-              background: '#6366f1', color: '#fff',
+              background: '#818cf8', color: '#fff',
               fontSize: 13, fontWeight: 700, textDecoration: 'none',
               transition: 'background 150ms cubic-bezier(0.23,1,0.32,1)',
             }}
-            onMouseEnter={e => (e.currentTarget.style.background = '#4f46e5')}
-            onMouseLeave={e => (e.currentTarget.style.background = '#6366f1')}
+            onMouseEnter={e => (e.currentTarget.style.background = '#6366f1')}
+            onMouseLeave={e => (e.currentTarget.style.background = '#818cf8')}
           >
             Start free
           </Link>
@@ -117,8 +117,8 @@ export default function LandingPage() {
               display: 'inline-flex', alignItems: 'center', gap: 6,
               fontSize: 11, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase',
               padding: '5px 14px', borderRadius: 9999,
-              background: 'rgba(99,102,241,0.08)',
-              border: '1px solid rgba(99,102,241,0.2)',
+              background: 'rgba(129,140,248,0.08)',
+              border: '1px solid rgba(129,140,248,0.2)',
               color: 'rgba(165,180,252,0.85)',
               marginBottom: 18,
             }}>
@@ -136,9 +136,9 @@ export default function LandingPage() {
             }}>
               Cold emails that{' '}
               <span style={{
-                background: 'linear-gradient(135deg, #a5b4fc, #818cf8, #6366f1)',
+                background: 'linear-gradient(135deg, #a5b4fc, #818cf8, #818cf8)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 0 24px rgba(99,102,241,0.45))',
+                filter: 'drop-shadow(0 0 24px rgba(129,140,248,0.45))',
               }}>
                 feel personal.
               </span>
@@ -177,9 +177,9 @@ export default function LandingPage() {
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: 8,
                   padding: '13px 28px', borderRadius: 12,
-                  background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                  background: 'linear-gradient(135deg, #818cf8, #6366f1)',
                   color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none',
-                  boxShadow: '0 4px 24px rgba(99,102,241,0.35)',
+                  boxShadow: '0 4px 24px rgba(129,140,248,0.35)',
                   transition: 'opacity 150ms',
                   WebkitTapHighlightColor: 'transparent',
                 }}
@@ -191,7 +191,7 @@ export default function LandingPage() {
                 style={{
                   display: 'inline-flex', alignItems: 'center',
                   padding: '13px 22px', borderRadius: 12,
-                  border: '1px solid rgba(99,102,241,0.25)',
+                  border: '1px solid rgba(129,140,248,0.25)',
                   color: 'rgba(255,255,255,0.55)', fontSize: 14, fontWeight: 600, textDecoration: 'none',
                   transition: 'border-color 150ms, color 150ms',
                 }}
@@ -214,7 +214,7 @@ export default function LandingPage() {
           >
             <div style={{
               background: 'rgba(13,17,23,0.92)',
-              border: '1px solid rgba(99,102,241,0.2)',
+              border: '1px solid rgba(129,140,248,0.2)',
               borderRadius: 18,
               overflow: 'hidden',
               boxShadow: '0 24px 64px rgba(0,0,0,0.6)',
@@ -222,7 +222,7 @@ export default function LandingPage() {
               {/* Chrome bar */}
               <div style={{
                 background: 'rgba(255,255,255,0.03)',
-                borderBottom: '1px solid rgba(99,102,241,0.12)',
+                borderBottom: '1px solid rgba(129,140,248,0.12)',
                 padding: '10px 14px',
                 display: 'flex', alignItems: 'center', gap: 8,
               }}>
@@ -244,13 +244,13 @@ export default function LandingPage() {
               <div style={{ padding: '20px' }}>
                 {/* Email thread */}
                 <div style={{ marginBottom: 16 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(99,102,241,0.6)', marginBottom: 10 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(129,140,248,0.6)', marginBottom: 10 }}>
                     Active threads
                   </div>
                   {[
                     { name: 'Sarah Chen', co: 'TechCorp', status: 'replied', time: '2m ago', preview: "Hi, thanks for reaching out! We'd love to…", dot: '#22c55e' },
                     { name: 'Marcus Webb', co: 'Pixel Studio', status: 'opened', time: '1h ago', preview: 'Saw your email — this looks interesting…', dot: '#f59e0b' },
-                    { name: 'Ayesha Patel', co: 'Bloom Media', status: 'sent', time: '3h ago', preview: 'Hi Ayesha, I noticed your team recently…', dot: '#6366f1' },
+                    { name: 'Ayesha Patel', co: 'Bloom Media', status: 'sent', time: '3h ago', preview: 'Hi Ayesha, I noticed your team recently…', dot: '#818cf8' },
                   ].map((t, i) => (
                     <motion.div
                       key={t.name}
@@ -266,7 +266,7 @@ export default function LandingPage() {
                     >
                       <div style={{
                         width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-                        background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                        background: 'linear-gradient(135deg, #818cf8, #6366f1)',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: 11, fontWeight: 700, color: '#fff',
                       }}>
@@ -289,8 +289,8 @@ export default function LandingPage() {
 
                 {/* AI compose hint */}
                 <div style={{
-                  background: 'rgba(99,102,241,0.07)',
-                  border: '1px solid rgba(99,102,241,0.18)',
+                  background: 'rgba(129,140,248,0.07)',
+                  border: '1px solid rgba(129,140,248,0.18)',
                   borderRadius: 10,
                   padding: '10px 12px',
                 }}>
@@ -301,7 +301,7 @@ export default function LandingPage() {
                     &ldquo;Hi Marcus, I noticed Pixel Studio recently launched a new brand identity toolkit — congrats on the launch! I wanted to reach out because…&rdquo;
                   </div>
                   <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
-                    <div style={{ padding: '4px 10px', borderRadius: 6, background: '#6366f1', fontSize: 10, fontWeight: 700, color: '#fff', cursor: 'pointer' }}>Use this draft</div>
+                    <div style={{ padding: '4px 10px', borderRadius: 6, background: '#818cf8', fontSize: 10, fontWeight: 700, color: '#fff', cursor: 'pointer' }}>Use this draft</div>
                     <div style={{ padding: '4px 10px', borderRadius: 6, background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.09)', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>Regenerate</div>
                   </div>
                 </div>
@@ -312,9 +312,9 @@ export default function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section style={{ borderTop: '1px solid rgba(99,102,241,0.08)', padding: '64px 24px', position: 'relative', zIndex: 1 }}>
+      <section style={{ borderTop: '1px solid rgba(129,140,248,0.08)', padding: '64px 24px', position: 'relative', zIndex: 1 }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <p style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(99,102,241,0.6)', textTransform: 'uppercase', marginBottom: 8 }}>
+          <p style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(129,140,248,0.6)', textTransform: 'uppercase', marginBottom: 8 }}>
             How it works
           </p>
           <h2 style={{ textAlign: 'center', fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', fontWeight: 800, color: '#f0f1f8', letterSpacing: '-0.025em', marginBottom: 44 }}>
@@ -330,13 +330,13 @@ export default function LandingPage() {
                 transition={{ duration: 0.4, delay: i * 0.08, ease: EASE }}
                 style={{
                   background: 'rgba(13,17,23,0.7)',
-                  border: '1px solid rgba(99,102,241,0.12)',
+                  border: '1px solid rgba(129,140,248,0.12)',
                   borderRadius: 14, padding: '20px 18px',
                   transition: 'border-color 200ms',
                 }}
                 whileHover={{ y: -2 }}
               >
-                <div style={{ fontSize: 11, fontWeight: 800, color: 'rgba(99,102,241,0.55)', letterSpacing: '0.08em', marginBottom: 10 }}>{step.num}</div>
+                <div style={{ fontSize: 11, fontWeight: 800, color: 'rgba(129,140,248,0.55)', letterSpacing: '0.08em', marginBottom: 10 }}>{step.num}</div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f1f8', marginBottom: 6 }}>{step.label}</div>
                 <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>{step.desc}</div>
               </motion.div>
@@ -346,9 +346,9 @@ export default function LandingPage() {
       </section>
 
       {/* Features grid */}
-      <section style={{ borderTop: '1px solid rgba(99,102,241,0.08)', padding: '64px 24px', position: 'relative', zIndex: 1 }}>
+      <section style={{ borderTop: '1px solid rgba(129,140,248,0.08)', padding: '64px 24px', position: 'relative', zIndex: 1 }}>
         <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-          <p style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(99,102,241,0.6)', textTransform: 'uppercase', marginBottom: 8 }}>
+          <p style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(129,140,248,0.6)', textTransform: 'uppercase', marginBottom: 8 }}>
             Features
           </p>
           <h2 style={{ textAlign: 'center', fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', fontWeight: 800, color: '#f0f1f8', letterSpacing: '-0.025em', marginBottom: 44 }}>
@@ -364,10 +364,10 @@ export default function LandingPage() {
                 transition={{ duration: 0.4, delay: i * 0.07, ease: EASE }}
                 style={{
                   background: 'rgba(13,17,23,0.7)',
-                  border: '1px solid rgba(99,102,241,0.1)',
+                  border: '1px solid rgba(129,140,248,0.1)',
                   borderRadius: 14, padding: '20px 18px',
                 }}
-                whileHover={{ y: -2, boxShadow: '0 8px 32px rgba(99,102,241,0.12)' }}
+                whileHover={{ y: -2, boxShadow: '0 8px 32px rgba(129,140,248,0.12)' }}
               >
                 <div style={{ fontSize: 22, marginBottom: 12 }}>{f.icon}</div>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#f0f1f8', marginBottom: 6 }}>{f.title}</div>
@@ -379,9 +379,9 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing */}
-      <section style={{ borderTop: '1px solid rgba(99,102,241,0.08)', padding: '64px 24px', position: 'relative', zIndex: 1 }}>
+      <section style={{ borderTop: '1px solid rgba(129,140,248,0.08)', padding: '64px 24px', position: 'relative', zIndex: 1 }}>
         <div style={{ maxWidth: 800, margin: '0 auto' }}>
-          <p style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(99,102,241,0.6)', textTransform: 'uppercase', marginBottom: 8 }}>
+          <p style={{ textAlign: 'center', fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', color: 'rgba(129,140,248,0.6)', textTransform: 'uppercase', marginBottom: 8 }}>
             Pricing
           </p>
           <h2 style={{ textAlign: 'center', fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', fontWeight: 800, color: '#f0f1f8', letterSpacing: '-0.025em', marginBottom: 44 }}>
@@ -407,8 +407,8 @@ export default function LandingPage() {
               <div
                 key={tier}
                 style={{
-                  background: highlight ? 'rgba(99,102,241,0.08)' : 'rgba(13,17,23,0.7)',
-                  border: `1px solid ${highlight ? 'rgba(99,102,241,0.35)' : 'rgba(99,102,241,0.1)'}`,
+                  background: highlight ? 'rgba(129,140,248,0.08)' : 'rgba(13,17,23,0.7)',
+                  border: `1px solid ${highlight ? 'rgba(129,140,248,0.35)' : 'rgba(129,140,248,0.1)'}`,
                   borderRadius: 16, padding: '24px 20px',
                   position: 'relative',
                 }}
@@ -417,7 +417,7 @@ export default function LandingPage() {
                   <div style={{
                     position: 'absolute', top: 14, right: 14,
                     fontSize: 9, fontWeight: 800, padding: '3px 8px', borderRadius: 99,
-                    background: '#6366f1', color: '#fff', letterSpacing: '0.06em',
+                    background: '#818cf8', color: '#fff', letterSpacing: '0.06em',
                   }}>
                     POPULAR
                   </div>
@@ -439,8 +439,8 @@ export default function LandingPage() {
                   style={{
                     display: 'block', textAlign: 'center',
                     padding: '11px', borderRadius: 10,
-                    background: highlight ? '#6366f1' : 'transparent',
-                    border: highlight ? 'none' : '1px solid rgba(99,102,241,0.25)',
+                    background: highlight ? '#818cf8' : 'transparent',
+                    border: highlight ? 'none' : '1px solid rgba(129,140,248,0.25)',
                     color: highlight ? '#fff' : 'rgba(255,255,255,0.55)',
                     fontSize: 13, fontWeight: 700, textDecoration: 'none',
                     transition: 'background 150ms',
@@ -463,8 +463,8 @@ export default function LandingPage() {
           transition={{ duration: 0.5, ease: EASE }}
           style={{
             maxWidth: 640, margin: '0 auto',
-            background: 'rgba(99,102,241,0.08)',
-            border: '1px solid rgba(99,102,241,0.2)',
+            background: 'rgba(129,140,248,0.08)',
+            border: '1px solid rgba(129,140,248,0.2)',
             borderRadius: 20, padding: '48px 32px',
             textAlign: 'center',
           }}
@@ -480,9 +480,9 @@ export default function LandingPage() {
             style={{
               display: 'inline-flex', alignItems: 'center', gap: 8,
               padding: '13px 32px', borderRadius: 12,
-              background: 'linear-gradient(135deg, #6366f1, #4f46e5)',
+              background: 'linear-gradient(135deg, #818cf8, #6366f1)',
               color: '#fff', fontSize: 15, fontWeight: 700, textDecoration: 'none',
-              boxShadow: '0 4px 24px rgba(99,102,241,0.35)',
+              boxShadow: '0 4px 24px rgba(129,140,248,0.35)',
             }}
           >
             Start your first campaign →
@@ -495,7 +495,7 @@ export default function LandingPage() {
 
       {/* Footer */}
       <footer style={{
-        borderTop: '1px solid rgba(99,102,241,0.08)',
+        borderTop: '1px solid rgba(129,140,248,0.08)',
         padding: '20px 24px',
         textAlign: 'center',
         fontSize: 11,
