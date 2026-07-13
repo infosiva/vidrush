@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   title: 'OutreachCRM — Lead email management',
   description: 'Send, track and reply to outreach emails across all your leads.',
   metadataBase: new URL('https://outreach-crm.vercel.app'),
+  other: {
+    'google-adsense-account': 'ca-pub-XXXXXXXXXXXXXXXX',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
