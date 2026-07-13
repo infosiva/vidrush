@@ -1,5 +1,22 @@
 # agents/ — Project Standards
 
+## §0-MOBBIN — MOBBIN MCP MANDATORY ON EVERY UI/DESIGN TOUCH (HARD RULE — added 2026-07-13, NO EXCEPTIONS)
+
+**Mobbin MCP (`mcp__mobbin__*`) installed 2026-07-13. Real production app screens/flows — grounds every layout decision in actually-shipped UI instead of invented patterns.**
+
+### Mandatory sequence — fires alongside §0-UI-QUALITY-GATE, before `/design-shotgun`
+1. `mcp__mobbin__*` — pull 3-5 real reference screens matching the project's category (fintech, quiz, dashboard, booking, etc.) BEFORE running `/design-shotgun` on any new layout, hero, or component
+2. Layer on top, same order as always: `/ui-ux-pro-max` → `/taste-skill` → `/21st-registry` → matching Open Design skill → `/emil-design-eng` → `/animate`
+3. Use Mobbin references to validate spacing/hierarchy/motion choices during `/ui-ux-pro-max` and `/emil-design-eng` passes — not just at the start
+
+### Auto-trigger
+Fires on: any `app/page.tsx`/`app/layout.tsx` touch, any new component, any "redesign"/"polish"/"make it look better" request, any new project scaffold — same trigger list as `§0-UI-QUALITY-GATE`.
+
+### Skip condition
+Only skip if Mobbin MCP is down/unauthenticated (OAuth needed on first use) — don't block the task on it, note the skip in the report, proceed with the rest of the pipeline. Never skip because "this is a small change."
+
+**A UI touch that runs `/ui-ux-pro-max` + layout skills but never queried Mobbin = incomplete — same enforcement class as skipping `/ui-ux-pro-max` itself.**
+
 ## §0-TOOL-HYGIENE — CONNECT TOOLS ONLY WHEN NEEDED, QUICK CHECKUP EVERY SESSION (HARD RULE — added 2026-07-07, NO EXCEPTIONS)
 
 **Connect a tool (MCP server, plugin) only when a task actually needs it — not "just in case." Minimize token/cost waste from idle connected tools.**
