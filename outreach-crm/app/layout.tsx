@@ -23,7 +23,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           {children}
         </div>
         <FloatingChatWrapper />
-        <FeedbackWidget siteName="Outreach CRM" />
+        <FeedbackWidget siteName="Outreach CRM" position="left" />
         <Script defer data-domain="outreach-crm-olive.vercel.app" src="https://plausible.io/js/script.js" strategy="afterInteractive" />
         <Script defer data-site="outreach-crm-olive.vercel.app" src="http://31.97.56.148:3098/t.js" strategy="afterInteractive" />
       </body>
