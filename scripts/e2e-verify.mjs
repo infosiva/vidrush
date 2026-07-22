@@ -183,17 +183,18 @@ try {
     const page = await browser.newPage();
     await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 10000 }).catch(() => null);
     await page.waitForTimeout(1500);
-    // Look for chatbot FAB — fixed bottom-right button
-    const fab = await page.locator('[data-testid="chatbot-fab"], [aria-label*="chat" i], button:has(svg)').filter({ hasText: /chat|💬/i }).first().isVisible({ timeout: 3000 }).catch(async () => {
-      // fallback: look for any fixed bottom-right button
-      return page.evaluate(() => {
+    // Look for chatbot FAB — fixed bottom-right button (icon-only FABs have no text)
+    let fab = await page.locator('[data-testid="chatbot-fab"], [aria-label*="chat" i]').first().isVisible({ timeout: 3000 }).catch(() => false);
+    if (!fab) {
+      // fallback: any fixed bottom-right button (covers icon-only FABs with no aria-label)
+      fab = await page.evaluate(() => {
         const btns = Array.from(document.querySelectorAll('button'));
         return btns.some(b => {
           const s = window.getComputedStyle(b);
           return s.position === 'fixed' && parseInt(s.bottom) < 100 && parseInt(s.right) < 100;
         });
-      });
-    });
+      }).catch(() => false);
+    }
     await logToDb('p5', !!fab, fab ? 'Chatbot FAB visible' : 'Chatbot FAB not found — §Z5 violation');
     record('p5', !!fab, fab ? 'FAB visible' : 'FAB MISSING — §Z5 violation');
     await page.close();
@@ -203,7 +204,9 @@ try {
   if (CHECKS.includes('p4')) {
     const page = await browser.newPage();
     await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 10000 }).catch(() => null);
-    const authWall = await page.locator('text=Sign in, text=Log in, text=Create account').first().isVisible({ timeout: 2000 }).catch(() => false);
+    // Auth wall = main content requires sign-in, not just nav login link
+    const authWallRaw = await page.locator('main text=Sign in, main text=Log in, main text=Create account, h1:has-text("Sign in"), h1:has-text("Log in")').first().isVisible({ timeout: 2000 }).catch(() => false);
+    const authWall = authWallRaw;
     const hasInput = await page.locator('input, textarea').first().isVisible({ timeout: 3000 }).catch(() => false);
     const pass = !authWall && hasInput;
     await logToDb('p4', pass, authWall ? 'Auth wall present on landing — §T violation' : `Core action accessible (input ${hasInput ? 'found' : 'missing'})`);
