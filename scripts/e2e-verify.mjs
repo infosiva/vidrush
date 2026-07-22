@@ -168,8 +168,17 @@ try {
     );
     let broken = 0;
     for (const link of navLinks) {
+      // Same-page anchors (/#section) never trigger a fresh network request once
+      // already on that route — Playwright's goto() can return a null response
+      // for fragment-only navigation, which isn't a real 404. Check the base
+      // route's status instead of the fragment URL for these.
+      const [routePart, fragment] = link.href.split('#');
       const full = `${BASE_URL}${link.href}`;
       const res = await page.goto(full, { timeout: 6000 }).catch(() => null);
+      if (!res && fragment) {
+        const baseRes = await page.goto(`${BASE_URL}${routePart || '/'}`, { timeout: 6000 }).catch(() => null);
+        if (baseRes && baseRes.status() < 400) continue;
+      }
       if (!res || res.status() >= 400) { broken++; console.log(`     ⚠ 404: ${link.href} (${link.text})`); }
     }
     const pass = broken === 0;
