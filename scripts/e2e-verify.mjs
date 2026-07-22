@@ -104,6 +104,7 @@ try {
     const response = await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 10000 }).catch(() => null);
     const loadMs = Date.now() - startLoad;
     const status = response?.status() ?? 0;
+    await page.waitForTimeout(800);
     const h1 = await page.locator('h1').first().isVisible({ timeout: 5000 }).catch(() => false);
     const criticalErrors = consoleErrors.filter(e => !e.includes('favicon') && !e.includes('404'));
     const pass = status === 200 && h1 && criticalErrors.length === 0;
