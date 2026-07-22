@@ -201,16 +201,23 @@ try {
   }
 
   // ── P4: Core action zero-auth ──────────────────────────────────────────────
+  // Core action can be an <input>/<textarea> (search/generate tools), a
+  // primary CTA <button> (quiz/record/scan tools), or a content <a> link
+  // inside <main> (browse/read/aggregator sites) — any is valid evidence
+  // the visitor can act without signing in first. Longer timeout tolerates
+  // hero fade-in animations that delay visibility past a naive 2-3s check.
   if (CHECKS.includes('p4')) {
     const page = await browser.newPage();
-    await page.goto(BASE_URL, { waitUntil: 'domcontentloaded', timeout: 10000 }).catch(() => null);
+    await page.goto(BASE_URL, { waitUntil: 'networkidle', timeout: 15000 }).catch(() => null);
     // Auth wall = main content requires sign-in, not just nav login link
-    const authWallRaw = await page.locator('main text=Sign in, main text=Log in, main text=Create account, h1:has-text("Sign in"), h1:has-text("Log in")').first().isVisible({ timeout: 2000 }).catch(() => false);
-    const authWall = authWallRaw;
-    const hasInput = await page.locator('input, textarea').first().isVisible({ timeout: 3000 }).catch(() => false);
-    const pass = !authWall && hasInput;
-    await logToDb('p4', pass, authWall ? 'Auth wall present on landing — §T violation' : `Core action accessible (input ${hasInput ? 'found' : 'missing'})`);
-    record('p4', pass, authWall ? 'AUTH WALL on landing — §T violation' : `input ${hasInput ? '✓' : '✗'}`);
+    const authWall = await page.locator('main text=Sign in, main text=Log in, main text=Create account, h1:has-text("Sign in"), h1:has-text("Log in")').first().isVisible({ timeout: 2000 }).catch(() => false);
+    const hasInput = await page.locator('input, textarea').first().isVisible({ timeout: 5000 }).catch(() => false);
+    const hasButton = hasInput ? false : await page.locator('main button, main a[role="button"]').first().isVisible({ timeout: 5000 }).catch(() => false);
+    const hasLink = (hasInput || hasButton) ? false : await page.locator('main a[href]:not([href="#"])').first().isVisible({ timeout: 5000 }).catch(() => false);
+    const pass = !authWall && (hasInput || hasButton || hasLink);
+    const evidence = hasInput ? 'input' : hasButton ? 'button' : hasLink ? 'link' : 'none';
+    await logToDb('p4', pass, authWall ? 'Auth wall present on landing — §T violation' : `Core action accessible (${evidence})`);
+    record('p4', pass, authWall ? 'AUTH WALL on landing — §T violation' : `core action ${evidence !== 'none' ? `✓ (${evidence})` : '✗'}`);
     await page.close();
   }
 
