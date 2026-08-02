@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import PromoBar from "@/components/PromoBar";
 
 type ParsedContract = {
   vendor: string;
@@ -162,6 +163,8 @@ export default function Home() {
               {parsing ? "Parsing..." : "Parse contract"}
             </button>
           </form>
+
+          <PromoBar />
 
           {result && (
             <div className="mt-4 rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-sm">
