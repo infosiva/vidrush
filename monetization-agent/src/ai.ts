@@ -59,7 +59,7 @@ async function callOpenAICompat(
 const GROQ_TIERS: Record<Quality, string[]> = {
   fast:     ['llama-3.1-8b-instant'],
   balanced: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'],
-  best:     ['meta-llama/llama-4-scout-17b-16e-instruct', 'qwen/qwen3-32b', 'llama-3.3-70b-versatile'],
+  best:     ['llama-3.3-70b-versatile'],
 };
 
 const GEMINI_TIERS: Record<Quality, string[]> = {
