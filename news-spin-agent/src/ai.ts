@@ -23,7 +23,8 @@ function shouldSkip(msg: string): boolean {
     m.includes('credit') || m.includes('timed out') || m.includes('401') ||
     m.includes('403') || m.includes('invalid_api_key') || m.includes('not configured') ||
     m.includes('overloaded') || m.includes('service unavailable') || m.includes('529') ||
-    m.includes('model_not_active') || m.includes('model not found')
+    m.includes('model_not_active') || m.includes('model not found') ||
+    m.includes('does not exist') || m.includes('model_not_found')
   );
 }
 
@@ -44,7 +45,7 @@ async function callOpenAICompat(
   return data.choices?.[0]?.message?.content || '';
 }
 
-const GROQ_MODELS = ['meta-llama/llama-4-scout-17b-16e-instruct', 'llama-3.3-70b-versatile', 'qwen/qwen3-32b'];
+const GROQ_MODELS = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
 const GEMINI_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash'];
 const CEREBRAS_MODELS = ['llama3.1-8b'];
 
