@@ -32,7 +32,8 @@ function shouldSkip(msg: string): boolean {
     m.includes('credit') || m.includes('timed out') || m.includes('401') ||
     m.includes('403') || m.includes('invalid_api_key') || m.includes('not configured') ||
     m.includes('overloaded') || m.includes('service unavailable') || m.includes('529') ||
-    m.includes('model_not_active') || m.includes('model not found')
+    m.includes('model_not_active') || m.includes('model not found') ||
+    m.includes('does not exist') || m.includes('model_not_found')
   );
 }
 

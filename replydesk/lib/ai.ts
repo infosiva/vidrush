@@ -53,7 +53,7 @@ const DEFAULTS: Record<string, { tiers: Record<Quality, string[]>; baseUrl: stri
     tiers: {
       fast:     ['llama-3.1-8b-instant', 'gemma2-9b-it'],
       balanced: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'],
-      best:     ['meta-llama/llama-4-scout-17b-16e-instruct', 'qwen/qwen3-32b', 'llama-3.3-70b-versatile'],
+      best:     ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'],
     },
   },
   gemini: {
@@ -281,6 +281,7 @@ function allFreeExhausted(): boolean {
 }
 
 function sendExhaustionAlert(tried: string[]) {
+  if (process.env.TELEGRAM_NOTIFICATIONS_DISABLED === 'true') return
   const token  = process.env.TELEGRAM_BOT_TOKEN
   const chatId = process.env.TELEGRAM_ALERT_CHAT ?? process.env.TELEGRAM_CHAT_ID
   if (!token || !chatId) return
@@ -314,6 +315,7 @@ function isSkippable(msg: string): boolean {
     m.includes('401') || m.includes('403') || m.includes('invalid_api_key') ||
     m.includes('unauthorized') || m.includes('not configured') || m.includes('no keys') ||
     m.includes('model_not_active') || m.includes('model not found') ||
+    m.includes('does not exist') || m.includes('model_not_found') ||
     m.includes('not supported') || m.includes('overloaded') ||
     m.includes('service unavailable') || m.includes('529') ||
     m.includes('timeout') || m.includes('econnrefused') || m.includes('enotfound')
