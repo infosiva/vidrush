@@ -103,6 +103,7 @@ function shouldSkip(msg: string): boolean {
     m.includes('no keys') || m.includes('401') || m.includes('403') ||
     m.includes('invalid_api_key') || m.includes('not configured') ||
     m.includes('model_not_active') || m.includes('model not found') ||
+    m.includes('does not exist') || m.includes('model_not_found') ||
     m.includes('not supported') || m.includes('overloaded') ||
     m.includes('service unavailable') || m.includes('529')
   );
@@ -133,12 +134,10 @@ async function callOpenAICompat(
 }
 
 // ── Groq — multiple models, each with key rotation ───────────────────────────
-// Models tried in order: Llama 4 Scout → Llama 3.3 70b → Qwen3 32b → Llama 3.1 8b
+// Models tried in order: Llama 3.3 70b → Llama 3.1 8b
 // Different models have independent rate-limit buckets on Groq.
 const GROQ_MODELS = [
-  'meta-llama/llama-4-scout-17b-16e-instruct', // Latest Llama 4, fast & capable
   'llama-3.3-70b-versatile',                   // Proven workhorse
-  'qwen/qwen3-32b',                             // Strong reasoning fallback
   'llama-3.1-8b-instant',                       // Fast small model, last resort
 ];
 
