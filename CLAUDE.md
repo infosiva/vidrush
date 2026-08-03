@@ -1,5 +1,22 @@
 # agents/ — Project Standards
 
+## §0-EDGE-CONFIG-QUOTA — NEVER UNCACHED EDGE CONFIG READS (HARD RULE — added 2026-08-01, NO EXCEPTIONS)
+
+**Incident 2026-08-01: shared Edge Config store (all ~43 portfolio projects read the same store) got the whole infosiva Vercel account auto-paused — `DEPLOYMENT_DISABLED`, 300% over the 50,000/mo free-tier Global Config Reads cap. Root cause: `loadSiteTheme()` in every project's `lib/theme-loader.ts` called `get()` uncached on every single page render. Fixed by wrapping every call in `unstable_cache(fn, [key], { revalidate: 600 })`. Vercel granted a one-time courtesy 3x-limit-for-30-days unblock — this does NOT repeat. Next overage = paid Pro upgrade or extended downtime, no second courtesy.**
+
+### Permanent rules — every project, every touch, no exceptions
+1. **Every Edge Config `get()`/`getAll()` call MUST be wrapped** in `unstable_cache` (`next/cache`) with `revalidate` set (600s / 10min is the portfolio standard) — or `export const revalidate = N` on the route/page if reading at request time. A bare `await get(...)` with no cache wrapper is banned, full stop.
+2. **Enforced automatically** — global pre-commit hook (`~/.claude/git-hooks/pre-commit`, §4 "Edge Config uncached-read guard") scans every staged `.ts`/`.tsx` file for `@vercel/edge-config` usage without a nearby `unstable_cache`/`revalidate`/`next/cache` marker and blocks the commit. This applies to ALL git repos on this machine (global `core.hooksPath`), not just `agents/`.
+3. **Monthly usage check** — run `node agents/scripts/check-edge-config-quota.mjs` (or equivalent Vercel API usage check) before any portfolio-wide wave/redesign session, and periodically otherwise. Treat >50% of the 50k/mo quota consumed before month-end as an early warning — go find what's reading uncached.
+4. **New project scaffold** — if the new project reads Edge Config at all, `lib/theme-loader.ts` (or equivalent) must be copied from an already-fixed project (kwizzo is the reference), never written from scratch without the cache wrapper.
+5. **Any code review / agent-authored change touching Edge Config** — verify the cache wrapper is present before considering the change done. This is the same enforcement class as `§0-VISUAL-QA` — a change that reads Edge Config without caching is incomplete work, redo it.
+
+### Why this matters more than most rules here
+One project's mistake pauses the ENTIRE account — all ~29 infosiva-account production sites go down at once, not just the offending project. There is no per-project blast radius on a shared Edge Config store.
+
+## §0-REF-AWESOME-LLM-APPS — reference repo, read-only (added 2026-07-15)
+`awesome-llm-apps/` (Shubhamsaboo/awesome-llm-apps, shallow clone, gitignored — not a submodule, not deployed) — curated real-world agent/LLM app examples across `advanced_ai_agents/`, `advanced_llm_apps/`, `agent_skills/`, `mcp_ai_agents/`, `rag_tutorials/`, `starter_ai_agents/`, `voice_ai_agents/`, `always_on_agents/`, `generative_ui_agents/`. Grep here for working reference implementations before building a new agent pattern from scratch. Update: `cd awesome-llm-apps && git pull`.
+
 ## §0-MOBBIN — MOBBIN MCP MANDATORY ON EVERY UI/DESIGN TOUCH (HARD RULE — added 2026-07-13, NO EXCEPTIONS)
 
 **Mobbin MCP (`mcp__mobbin__*`) installed 2026-07-13. Real production app screens/flows — grounds every layout decision in actually-shipped UI instead of invented patterns.**
@@ -853,6 +870,8 @@ execution not yet dispatched.
 ## MANDATORY: Secret Prevention Rules — NO EXCEPTIONS
 
 **These rules are permanent. Violations = secrets in public git history. That already happened once.**
+
+**Incident 2026-08-03: flighttracker committed a real Groq API key hardcoded in `scripts/setup-secrets.sh` and in `wrangler.toml`'s `[vars]` block (plaintext, not the Cloudflare secrets store). GitHub's secret-scanning partner program caught it and Groq auto-revoked the key — broke the shared AI cascade portfolio-wide (weekendai.app and others hit "Failed to generate plan"). Root cause: this section documented a pre-commit hook scanning for `gho_`/`ghp_`/`GOCSPX-`/`sk-ant-`/`gsk_`/`vcp_` patterns — but the actual global hook (`~/.claude/git-hooks/pre-commit`) never had that logic wired in. The check was aspirational documentation, not real enforcement. Fixed by: (1) rewriting `setup-secrets.sh` to read all values from env vars with a required-vars validation loop, (2) removing the hardcoded key from `wrangler.toml`, (3) actually implementing the secret-pattern scan in the global pre-commit hook — positioned to fire unconditionally before any project-type gate (a first attempt placed it after a `package.json` existence check, which silently skipped non-Node repos; caught via test and moved earlier). Verified: a throwaway repo with a fake `gsk_...` key now gets blocked at commit time regardless of project type.**
 
 ### Never commit these file types
 ```
