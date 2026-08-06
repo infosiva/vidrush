@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { AI_LIMITER } from '@/lib/rateLimit'
 
 export const runtime = 'nodejs'
 
 interface Message { role: 'user' | 'assistant' | 'system'; content: string }
 
 export async function POST(req: NextRequest) {
+  const limited = AI_LIMITER.check(req); if (limited) return limited
+
   try {
     const { messages } = await req.json() as { messages: Message[] }
     if (!messages?.length) return NextResponse.json({ error: 'messages required' }, { status: 400 })
