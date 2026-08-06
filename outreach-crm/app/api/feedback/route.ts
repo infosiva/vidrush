@@ -13,7 +13,7 @@ export async function POST(req: NextRequest) {
 
     const tgToken = process.env.TELEGRAM_BOT_TOKEN
     const tgChat = process.env.TELEGRAM_CHAT_ID
-    if (tgToken && tgChat) {
+    if (tgToken && tgChat && process.env.TELEGRAM_NOTIFICATIONS_DISABLED !== 'true') {
       const text = `📣 *${site} feedback*\nType: ${type} | Rating: ${rating ?? 'n/a'}\nPage: ${page ?? '/'}\n\n${message}${email ? `\n\nFrom: ${email}` : ''}`
       await fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
         method: 'POST',

@@ -2,10 +2,13 @@ export const dynamic = 'force-dynamic'
 // AI email suggestion — given lead info, suggest subject + body using Groq
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@/auth'
+import { AI_LIMITER } from '@/lib/rateLimit'
 
 const GROQ_KEY = process.env.GROQ_API_KEY
 
 export async function POST(req: NextRequest) {
+  const limited = AI_LIMITER.check(req); if (limited) return limited
+
   const session = await auth()
   if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 

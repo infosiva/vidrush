@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { AI_LIMITER } from '@/lib/rateLimit'
 
 export const runtime = 'nodejs'
 
@@ -17,6 +18,8 @@ function checkRateLimit(ip: string) {
 }
 
 export async function POST(req: NextRequest) {
+  const limited = AI_LIMITER.check(req); if (limited) return limited
+
   const ip = req.headers.get('x-forwarded-for') ?? 'unknown'
   if (!checkRateLimit(ip)) return NextResponse.json({ error: 'Rate limit' }, { status: 429 })
 
