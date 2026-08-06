@@ -1,4 +1,5 @@
 import { NextRequest } from 'next/server'
+import { AI_LIMITER } from '@/lib/rateLimit'
 
 export const runtime = 'edge'
 
@@ -7,6 +8,8 @@ Help users understand how ReplyDesk handles customer support 24/7, answers calls
 Be concise, friendly, and solution-focused. Keep replies under 120 words.`
 
 export async function POST(req: NextRequest) {
+  const limited = AI_LIMITER.check(req); if (limited) return limited
+
   const { messages } = await req.json()
   const apiKey = process.env.GROQ_API_KEY
   if (!apiKey) return new Response('No API key', { status: 500 })
